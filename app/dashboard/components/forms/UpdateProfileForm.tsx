@@ -2,9 +2,9 @@
 
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import type { User } from "@/app/base/models/UserModel";
-import { logout } from "@/components/dashboard/actions";
+import { logout } from "@/app/dashboard/components/actions";
 import { putEncrypted } from "@/libraries/EncryptedFetch";
-import { updateProfileSchema, type UpdateProfileFormState } from "@/components/forms/UpdateProfileSchema";
+import { updateProfileSchema, type UpdateProfileFormState } from "@/app/dashboard/components/forms/UpdateProfileSchema";
 
 type UpdateProfileFormErrors = Partial<Record<keyof UpdateProfileFormState, string>>;
 

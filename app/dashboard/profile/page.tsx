@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { UpdateProfileForm } from "@/components/forms/UpdateProfileForm";
+import { UpdateProfileForm } from "@/app/dashboard/components/forms/UpdateProfileForm";
 import { getSession } from "@/libraries/Auth";
 
 export const metadata: Metadata = {

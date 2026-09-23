@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { postEncrypted } from "@/libraries/EncryptedFetch";
-import { forgotPasswordSchema, type ForgotPasswordFormState } from "@/components/forms/ForgotPasswordSchema";
+import { forgotPasswordSchema, type ForgotPasswordFormState } from "@/app/sso/components/forms/ForgotPasswordSchema";
 
 type ForgotPasswordFormErrors = Partial<Record<keyof ForgotPasswordFormState, string>>;
 

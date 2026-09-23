@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { Op, literal } from "sequelize";
 import { connectDatabase } from "@/database/sequelize";
 import { SESSION_COOKIE, getSessionModel } from "@/app/sso/models/SessionModel";
@@ -50,4 +51,17 @@ export async function getSessionByToken(token: string): Promise<SessionInfo | nu
     permissions: session.permissions ?? [],
     expired_at: session.expired_at.toISOString(),
   };
+}
+
+/**
+ * Page-level guard. Returns live session, redirects to sign in
+ * when none exists. Callers check permissions with
+ * hasPermission() and render AccessDenied on denial.
+ */
+export async function requireSession(): Promise<SessionInfo> {
+  const session = await getSession();
+  if (!session) {
+    redirect("/sso");
+  }
+  return session;
 }

@@ -1,11 +1,7 @@
-import { redirect } from "next/navigation";
-import { getSession } from "@/libraries/Auth";
+import { requireSession } from "@/libraries/Auth";
 
 export default async function DashboardPage() {
-  const session = await getSession();
-  if (!session) {
-    redirect("/sso");
-  }
+  await requireSession();
 
   return (
     <div className="mx-auto max-w-4xl">

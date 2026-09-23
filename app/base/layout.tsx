@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { DashboardShell } from "@/app/dashboard/components/DashboardShell";
 import { requireSession } from "@/libraries/Auth";
 
-export default async function DashboardLayout({ children }: { children: ReactNode }) {
+export default async function BaseLayout({ children }: { children: ReactNode }) {
   const session = await requireSession();
 
   return (

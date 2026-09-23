@@ -4,7 +4,7 @@ import { useState, type ChangeEvent, type FormEvent } from "react";
 import type { LoginResult } from "@/app/sso/useCases/LoginUseCase";
 import type { User } from "@/app/base/models/UserModel";
 import { postEncrypted, putEncrypted } from "@/libraries/EncryptedFetch";
-import { changePasswordSchema, type ChangePasswordFormState } from "@/components/forms/ChangePasswordSchema";
+import { changePasswordSchema, type ChangePasswordFormState } from "@/app/sso/components/forms/ChangePasswordSchema";
 
 type ChangePasswordFormErrors = Partial<Record<keyof ChangePasswordFormState, string>>;
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SignInForm } from "@/components/forms/SignInForm";
+import { SignInForm } from "@/app/sso/components/forms/SignInForm";
 
 export const metadata: Metadata = {
   title: "Sign in | VortexGin",

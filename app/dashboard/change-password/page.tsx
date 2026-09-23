@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ChangePasswordForm } from "@/components/forms/ChangePasswordForm";
+import { ChangePasswordForm } from "@/app/sso/components/forms/ChangePasswordForm";
 import { getSession } from "@/libraries/Auth";
 
 export const metadata: Metadata = {

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { withEncryption } from "@/libraries/EncryptedRoute";
 import { fail } from "@/libraries/Http";
+import { hasPermission } from "@/libraries/Permissions";
 import { SESSION_COOKIE } from "@/app/sso/models/SessionModel";
 import { getSessionByToken } from "@/libraries/Auth";
 
@@ -17,16 +18,13 @@ function bearerToken(request: NextRequest): string | null {
 }
 
 /**
- * Pure access matcher, exported for testing. Grants when required list
- * empty, contains "authorized", matches user role slug, or overlaps
- * session permissions (any match).
+ * Pure access matcher, exported for testing. Same rule as
+ * hasPermission: session already verified upstream, so user
+ * counts as present; empty or "authorized" requirement grants,
+ * otherwise role slug or permission overlap required.
  */
 export function checkAccess(requiredActions: string[], permissions: string[], roleSlug?: string | null): boolean {
-  if (requiredActions.length === 0 || requiredActions.includes("authorized")) {
-    return true;
-  }
-
-  return requiredActions.some((action) => action === roleSlug || permissions.includes(action));
+  return hasPermission(true, permissions, requiredActions, roleSlug);
 }
 
 /**
@@ -55,13 +53,11 @@ export function withAuthorization<TContext>(handler: RouteHandler<TContext>, req
       return fail("Not authenticated.", 401);
     }
 
-    if (requiredActions && requiredActions.length > 0 && !requiredActions.includes("authorized")) {
+    if (requiredActions && requiredActions.length > 0) {
       const permissions = Array.isArray(session.permissions)
         ? session.permissions.filter((permission): permission is string => typeof permission === "string")
         : [];
-      const role = (session.user as { role?: { slug?: unknown } } | null)?.role;
-      const roleSlug = typeof role?.slug === "string" ? role.slug : null;
-      if (!checkAccess(requiredActions, permissions, roleSlug)) {
+      if (!hasPermission(session.user, permissions, requiredActions)) {
         return fail("Insufficient permissions.", 403);
       }
     }

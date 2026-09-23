@@ -6,7 +6,7 @@ import type { Menu } from "@/app/base/models/MenuModel";
 import { AuthComponent } from "@/components/AuthComponent";
 import { getEncrypted } from "@/libraries/EncryptedFetch";
 
-type SessionData = {
+type SidebarSession = {
   user: unknown;
   permissions: string[];
 };
@@ -15,23 +15,16 @@ function orderByWeight(menus: Menu[]): Menu[] {
   return [...menus].sort((a, b) => a.weight - b.weight);
 }
 
-export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const [session, setSession] = useState<SessionData | null>(null);
+export function Sidebar({ session, onNavigate }: { session: SidebarSession; onNavigate?: () => void }) {
   const [menus, setMenus] = useState<Menu[]>([]);
 
   useEffect(() => {
     let cancelled = false;
 
-    Promise.all([
-      getEncrypted<SessionData>("/sso/api/v1/session"),
-      getEncrypted<Menu[]>("/base/api/v1/menus?sortProperty=weight&sortDirection=asc&limit=100"),
-    ])
-      .then(([sessionEnvelope, menusEnvelope]) => {
+    getEncrypted<Menu[]>("/base/api/v1/menus?sortProperty=weight&sortDirection=asc&limit=100")
+      .then((menusEnvelope) => {
         if (cancelled) {
           return;
-        }
-        if (sessionEnvelope.success) {
-          setSession(sessionEnvelope.data);
         }
         if (menusEnvelope.success) {
           setMenus(menusEnvelope.data);
@@ -39,7 +32,6 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       })
       .catch(() => {
         if (!cancelled) {
-          setSession(null);
           setMenus([]);
         }
       });
@@ -65,8 +57,8 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         {roots.map((root) => (
           <AuthComponent
             key={root.uuid}
-            user={session?.user}
-            permissions={session?.permissions}
+            user={session.user}
+            permissions={session.permissions}
             allowedPermissions={root.action ? [root.action] : []}
           >
             <div className="flex flex-col gap-1">
@@ -81,8 +73,8 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                 child.action ? (
                   <AuthComponent
                     key={child.uuid}
-                    user={session?.user}
-                    permissions={session?.permissions}
+                    user={session.user}
+                    permissions={session.permissions}
                     allowedPermissions={[child.action]}
                   >
                     <Link

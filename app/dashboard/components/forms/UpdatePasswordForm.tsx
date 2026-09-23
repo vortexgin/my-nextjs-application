@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { postEncrypted } from "@/libraries/EncryptedFetch";
-import { updatePasswordSchema, type UpdatePasswordFormState } from "@/components/forms/UpdatePasswordSchema";
+import { updatePasswordSchema, type UpdatePasswordFormState } from "@/app/dashboard/components/forms/UpdatePasswordSchema";
 
 type UpdatePasswordFormErrors = Partial<Record<keyof UpdatePasswordFormState, string>>;
 

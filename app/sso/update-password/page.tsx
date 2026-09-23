@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { UpdatePasswordForm } from "@/components/forms/UpdatePasswordForm";
+import { UpdatePasswordForm } from "@/app/dashboard/components/forms/UpdatePasswordForm";
 
 export const metadata: Metadata = {
   title: "Set new password | VortexGin",

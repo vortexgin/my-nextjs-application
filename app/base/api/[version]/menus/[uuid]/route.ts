@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { connectDatabase } from "@/database/sequelize";
 import { withAuthorization } from "@/libraries/AuthorizedRoute";
-import { withEncryption } from "@/libraries/EncryptedRoute";
 import { fail, getErrorStatus, ok } from "@/libraries/Http";
 import { MenuDeleteUseCase } from "@/app/base/useCases/menu/MenuDeleteUseCase";
 import { MenuGetUseCase } from "@/app/base/useCases/menu/MenuGetUseCase";
@@ -60,6 +59,6 @@ async function handleDelete(
   }
 }
 
-export const GET = withAuthorization(withEncryption(handleGet), ["base:menus:view:detail"]);
-export const PUT = withAuthorization(withEncryption(handlePut), ["base:menus:view:update"]);
-export const DELETE = withAuthorization(withEncryption(handleDelete), ["base:menus:view:delete"]);
+export const GET = withAuthorization(handleGet, ["base:menus:view:detail"]);
+export const PUT = withAuthorization(handlePut, ["base:menus:view:update"]);
+export const DELETE = withAuthorization(handleDelete, ["base:menus:view:delete"]);

@@ -76,7 +76,11 @@ async function decryptEnvelope<T>(aesKey: CryptoKey, envelope: { iv: string; dat
     aesKey,
     combined,
   );
-  return JSON.parse(new TextDecoder().decode(plainBytes)) as ApiEnvelope<T>;
+  const decrypted = JSON.parse(new TextDecoder().decode(plainBytes));
+
+  return decrypted?.iv && decrypted?.data
+    ? decryptEnvelope<T>(aesKey, decrypted)
+    : decrypted as ApiEnvelope<T>;
 }
 
 /**
@@ -118,4 +122,18 @@ export async function postEncrypted<T>(path: string, payload: unknown): Promise<
  */
 export async function putEncrypted<T>(path: string, payload: unknown): Promise<ApiEnvelope<T>> {
   return sendEncrypted<T>("PUT", path, payload);
+}
+
+/**
+ * DELETEs through the hybrid RSA + AES-GCM exchange. No request body;
+ * only the key-exchange header is sent. Returns the decrypted envelope.
+ */
+export async function deleteEncrypted<T>(path: string): Promise<ApiEnvelope<T>> {
+  const { exchange, aesKey } = await startHandshake();
+
+  const response = await fetch(path, {
+    method: "DELETE",
+    headers: { "x-key-exchange": exchange },
+  });
+  return decryptEnvelope<T>(aesKey, (await response.json()) as { iv: string; data: string });
 }

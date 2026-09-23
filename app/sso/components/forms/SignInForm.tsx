@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import type { LoginResult } from "@/app/sso/useCases/LoginUseCase";
 import { postEncrypted } from "@/libraries/EncryptedFetch";
-import { signInSchema, type SignInFormState } from "@/components/forms/SignInSchema";
+import { signInSchema, type SignInFormState } from "@/app/sso/components/forms/SignInSchema";
 
 type SignInFormErrors = Partial<Record<keyof SignInFormState, string>>;
 
