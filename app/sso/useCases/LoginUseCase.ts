@@ -54,6 +54,8 @@ export class LoginUseCase extends BaseUseCase<LoginInput, LoginResult, LoginInpu
       expired_at: new Date(Date.now() + SESSION_TTL_HOURS * 60 * 60 * 1000),
       user_info: user as unknown as Record<string, unknown>,
       permissions,
+      status: "active",
+      deleted_at: null,
     });
 
     return {

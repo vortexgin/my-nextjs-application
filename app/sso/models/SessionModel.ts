@@ -3,12 +3,16 @@ import { getSequelizeInstance } from "@/database/sequelize";
 
 export const SESSION_COOKIE = "sessionToken";
 
+export type SessionStatus = "active" | "inactive" | "deleted";
+
 export type SessionModelAttributes = {
   uuid: string;
   expired_at: Date;
   created_at: Date;
   user_info: Record<string, unknown>;
   permissions: string[];
+  status: SessionStatus;
+  deleted_at: Date | null;
 };
 
 export type SessionModelCreationAttributes = Partial<SessionModelAttributes>;
@@ -19,6 +23,8 @@ export class SessionModel extends Model<SessionModelAttributes, SessionModelCrea
   declare created_at: Date;
   declare user_info: Record<string, unknown>;
   declare permissions: string[];
+  declare status: SessionStatus;
+  declare deleted_at: Date | null;
 }
 
 export async function getSessionModel(): Promise<typeof SessionModel> {
@@ -50,6 +56,16 @@ export async function getSessionModel(): Promise<typeof SessionModel> {
           type: DataTypes.ARRAY(DataTypes.STRING),
           allowNull: false,
           defaultValue: [],
+        },
+        status: {
+          type: DataTypes.ENUM("active", "inactive", "deleted"),
+          allowNull: false,
+          defaultValue: "active",
+        },
+        deleted_at: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: null,
         },
       },
       {

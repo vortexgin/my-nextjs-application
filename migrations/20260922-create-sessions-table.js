@@ -27,6 +27,16 @@ module.exports = {
         allowNull: false,
         defaultValue: [],
       },
+      status: {
+        type: Sequelize.ENUM("active", "inactive", "deleted"),
+        allowNull: false,
+        defaultValue: "active",
+      },
+      deleted_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
+        defaultValue: null,
+      },
     });
 
     await queryInterface.addIndex("sessions", ["expired_at"]);

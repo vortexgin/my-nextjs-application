@@ -12,7 +12,7 @@ export type SessionInfo = {
 
 /**
  * Server-only session check. Reads session cookie, loads live session row,
- * rejects missing / unknown / expired tokens. Returns null on any failure.
+ * rejects missing / unknown / expired / logged-out tokens. Returns null on any failure.
  */
 export async function getSession(): Promise<SessionInfo | null> {
   const store = await cookies();
@@ -24,7 +24,12 @@ export async function getSession(): Promise<SessionInfo | null> {
   await connectDatabase();
   const SessionModel = await getSessionModel();
   const session = await SessionModel.findOne({
-    where: { uuid: token, expired_at: { [Op.gt]: literal("NOW()") } },
+    where: {
+      uuid: token,
+      status: "active",
+      deleted_at: null,
+      expired_at: { [Op.gt]: literal("NOW()") },
+    },
   });
   if (!session) {
     return null;
