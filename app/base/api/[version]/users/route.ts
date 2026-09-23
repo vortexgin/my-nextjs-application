@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { connectDatabase } from "@/database/sequelize";
+import { withAuthorization } from "@/libraries/AuthorizedRoute";
 import { withEncryption } from "@/libraries/EncryptedRoute";
 import { fail, getErrorStatus, ok, queryParam } from "@/libraries/Http";
 import { UserCreateUseCase } from "@/app/base/useCases/user/UserCreateUseCase";
@@ -42,5 +43,5 @@ async function handlePost(request: NextRequest) {
   }
 }
 
-export const GET = withEncryption(handleGet);
-export const POST = withEncryption(handlePost);
+export const GET = withAuthorization(withEncryption(handleGet), ["base:user:list:list"]);
+export const POST = withAuthorization(withEncryption(handlePost), ["base:user:create:create"]);

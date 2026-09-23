@@ -21,6 +21,15 @@ export async function getSession(): Promise<SessionInfo | null> {
     return null;
   }
 
+  return getSessionByToken(token);
+}
+
+/** Same check for an explicit token (e.g. Authorization header). */
+export async function getSessionByToken(token: string): Promise<SessionInfo | null> {
+  if (!token) {
+    return null;
+  }
+
   await connectDatabase();
   const SessionModel = await getSessionModel();
   const session = await SessionModel.findOne({
