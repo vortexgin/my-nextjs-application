@@ -23,6 +23,11 @@
 # misc
 .DS_Store
 *.pem
+.idea/
+
+# RSA keys for API payload encryption (private key must never be committed)
+keys/*.pem
+!keys/.gitkeep
 
 # debug
 npm-debug.log*
