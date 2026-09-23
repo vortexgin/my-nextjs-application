@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import Joi, { Schema } from "joi";
 import MenuModelFactory, { MenuModel, type CreateMenuInput, type Menu } from "@/app/base/models/MenuModel";
+import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import ActionModelFactory, { ActionModel } from "@/app/base/models/ActionModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import NotFoundException from "@/exceptions/NotFoundException";
@@ -16,9 +17,10 @@ const createMenuSchema = Joi.object({
   weight: Joi.number().integer().min(0).optional(),
 });
 
-export class MenuCreateUseCase extends BaseUseCase<CreateMenuInput, Menu, CreateMenuInput> {
-  protected async preExec(input: CreateMenuInput): Promise<CreateMenuInput> {
-    return this.validate<CreateMenuInput>(createMenuSchema, input);
+export class MenuCreateUseCase extends BaseUseCase<CreateMenuInput, Menu, { input: CreateMenuInput; actor: ActivityActor }> {
+  protected async preExec(input: CreateMenuInput, actor?: ActivityActor): Promise<{ input: CreateMenuInput; actor: ActivityActor }> {
+    const validated = await this.validate<CreateMenuInput>(createMenuSchema, input);
+    return { input: validated, actor: actor ?? null };
   }
 
   protected async validate<TValidated = CreateMenuInput>(schema: Schema, input: CreateMenuInput): Promise<TValidated> {
@@ -42,7 +44,8 @@ export class MenuCreateUseCase extends BaseUseCase<CreateMenuInput, Menu, Create
     return validatedInput;
   }
 
-  protected async execute(input: CreateMenuInput): Promise<Menu> {
+  protected async execute(context: { input: CreateMenuInput; actor: ActivityActor }): Promise<Menu> {
+    const { input } = context;
     await MenuModelFactory();
     const menu = await MenuModel.create({
       uuid: randomUUID(),
@@ -57,6 +60,22 @@ export class MenuCreateUseCase extends BaseUseCase<CreateMenuInput, Menu, Create
       deleted_at: null,
     });
 
-    return await MenuModel.toApi(menu.toJSON());
+    const result = await MenuModel.toApi(menu.toJSON());
+    return result;
+  }
+
+  protected async postExec(
+    result: Menu,
+    context?: { input: CreateMenuInput; actor: ActivityActor },
+  ): Promise<Menu> {
+    void recordActivityLog({
+      actor: context?.actor ?? null,
+      operation: "create",
+      entity: "menu",
+      entity_uuid: result.uuid,
+      origin: sanitizeActivityData(context?.input),
+      updated: result,
+    });
+    return super.postExec(result, context);
   }
 }

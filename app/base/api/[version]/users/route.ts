@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { connectDatabase } from "@/database/sequelize";
+import { actorFromRequest } from "@/libraries/Auth";
 import { withAuthorization } from "@/libraries/AuthorizedRoute";
 import { fail, getErrorStatus, ok, queryParam } from "@/libraries/Http";
 import { UserCreateUseCase } from "@/app/base/useCases/user/UserCreateUseCase";
@@ -35,7 +36,7 @@ async function handlePost(request: NextRequest) {
     await connectDatabase();
     const payload = (await request.json()) as Partial<CreateUserInput>;
 
-    const user = await new UserCreateUseCase().exec(payload as CreateUserInput);
+    const user = await new UserCreateUseCase().exec(payload as CreateUserInput, await actorFromRequest(request));
     return ok(user, 201);
   } catch (error: any) {
     return fail(error.message ?? "Failed to create user.", getErrorStatus(error, 500));

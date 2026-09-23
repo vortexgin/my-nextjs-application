@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { connectDatabase } from "@/database/sequelize";
+import { actorFromRequest } from "@/libraries/Auth";
 import { withAuthorization } from "@/libraries/AuthorizedRoute";
 import { fail, getErrorStatus, ok } from "@/libraries/Http";
 import { MenuDeleteUseCase } from "@/app/base/useCases/menu/MenuDeleteUseCase";
@@ -33,7 +34,7 @@ async function handlePut(
     const { uuid } = await params;
     const payload = (await request.json()) as UpdateMenuInput;
 
-    const menu = await new MenuUpdateUseCase().exec(uuid, payload);
+    const menu = await new MenuUpdateUseCase().exec(uuid, payload, await actorFromRequest(request));
     return ok(menu);
   } catch (error: any) {
     return fail(error.message ?? "Failed to update menu.", getErrorStatus(error, 400));
@@ -41,13 +42,13 @@ async function handlePut(
 }
 
 async function handleDelete(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ uuid: string }> },
 ) {
   try {
     await connectDatabase();
     const { uuid } = await params;
-    const deleted = await new MenuDeleteUseCase().exec(uuid);
+    const deleted = await new MenuDeleteUseCase().exec(uuid, await actorFromRequest(request));
 
     if (!deleted) {
       return fail("Menu not found.", 404);

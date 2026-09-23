@@ -45,9 +45,20 @@ export function withEncryption<TContext>(handler: RouteHandler<TContext>): Route
       const rawBody = await request.text();
       if (rawBody) {
         const payload = decryptEnvelope(sessionKey, JSON.parse(rawBody));
+        // Forward auth headers: downstream handlers resolve the
+        // session (activity log, session-aware logic) from these.
+        const innerHeaders: Record<string, string> = { "content-type": "application/json" };
+        const cookie = request.headers.get("cookie");
+        if (cookie) {
+          innerHeaders.cookie = cookie;
+        }
+        const authorization = request.headers.get("authorization");
+        if (authorization) {
+          innerHeaders.authorization = authorization;
+        }
         innerRequest = new NextRequest(request.url, {
           method: request.method,
-          headers: { "content-type": "application/json" },
+          headers: innerHeaders,
           body: JSON.stringify(payload),
         });
       }

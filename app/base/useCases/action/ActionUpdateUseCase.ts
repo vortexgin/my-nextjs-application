@@ -1,6 +1,7 @@
 import Joi from "joi";
 import { Op } from "sequelize";
 import ActionModelFactory, { ActionModel, type UpdateActionInput, type Action } from "@/app/base/models/ActionModel";
+import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import DuplicateEntityException from "@/exceptions/DuplicateEntityException";
 import NotFoundException from "@/exceptions/NotFoundException";
@@ -11,11 +12,11 @@ const updateActionSchema = Joi.object({
   status: Joi.string().valid("active", "inactive", "deleted").optional(),
 }).min(1);
 
-export class ActionUpdateUseCase extends BaseUseCase<string, Action, { uuid: string; input: UpdateActionInput }> {
+export class ActionUpdateUseCase extends BaseUseCase<string, Action, { uuid: string; input: UpdateActionInput; actor: ActivityActor }> {
 
   private actionData?: ActionModel | null;
 
-  protected async preExec(uuid: string, input: UpdateActionInput): Promise<{ uuid: string; input: UpdateActionInput }> {
+  protected async preExec(uuid: string, input: UpdateActionInput, actor?: ActivityActor): Promise<{ uuid: string; input: UpdateActionInput; actor: ActivityActor }> {
     const validatedInput = await this.validate<UpdateActionInput>(updateActionSchema, input);
 
     await ActionModelFactory();
@@ -24,10 +25,10 @@ export class ActionUpdateUseCase extends BaseUseCase<string, Action, { uuid: str
       throw new NotFoundException("Action not found")
     }
 
-    return { uuid, input: validatedInput };
+    return { uuid, input: validatedInput, actor: actor ?? null };
   }
 
-  protected async execute(context: { uuid: string; input: UpdateActionInput }): Promise<Action> {
+  protected async execute(context: { uuid: string; input: UpdateActionInput; actor: ActivityActor }): Promise<Action> {
     const { uuid, input } = context;
     await ActionModelFactory();
     const nextData: Record<string, unknown> = {
@@ -59,5 +60,20 @@ export class ActionUpdateUseCase extends BaseUseCase<string, Action, { uuid: str
     await this.actionData?.update(nextData);
 
     return ActionModel.toApi(this.actionData?.toJSON());
+  }
+
+  protected async postExec(
+    result: Action,
+    context?: { uuid: string; input: UpdateActionInput; actor: ActivityActor },
+  ): Promise<Action> {
+    void recordActivityLog({
+      actor: context?.actor ?? null,
+      operation: "update",
+      entity: "action",
+      entity_uuid: context?.uuid ?? result.uuid,
+      origin: sanitizeActivityData(context?.input),
+      updated: result,
+    });
+    return super.postExec(result, context);
   }
 }

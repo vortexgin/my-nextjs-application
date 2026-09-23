@@ -1,6 +1,7 @@
 import Joi from "joi";
 import { Op } from "sequelize";
 import RoleModelFactory, { RoleModel, type UpdateRoleInput, type Role } from "@/app/base/models/RoleModel";
+import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import ActionModelFactory, { ActionModel } from "@/app/base/models/ActionModel";
 import PermissionModelFactory, { PermissionModel } from "@/app/base/models/PermissionModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
@@ -14,11 +15,11 @@ const updateRoleSchema = Joi.object({
   action_ids: Joi.array().items(Joi.string().uuid({ version: "uuidv4" })).optional(),
 }).min(1);
 
-export class RoleUpdateUseCase extends BaseUseCase<string, Role, { uuid: string; input: UpdateRoleInput }> {
+export class RoleUpdateUseCase extends BaseUseCase<string, Role, { uuid: string; input: UpdateRoleInput; actor: ActivityActor }> {
 
   private roleData?: RoleModel | null;
 
-  protected async preExec(uuid: string, input: UpdateRoleInput): Promise<{ uuid: string; input: UpdateRoleInput }> {
+  protected async preExec(uuid: string, input: UpdateRoleInput, actor?: ActivityActor): Promise<{ uuid: string; input: UpdateRoleInput; actor: ActivityActor }> {
     const validatedInput = await this.validate<UpdateRoleInput>(updateRoleSchema, input);
 
     await RoleModelFactory();
@@ -27,10 +28,10 @@ export class RoleUpdateUseCase extends BaseUseCase<string, Role, { uuid: string;
       throw new NotFoundException("Role not found")
     }
 
-    return { uuid, input: validatedInput };
+    return { uuid, input: validatedInput, actor: actor ?? null };
   }
 
-  protected async execute(context: { uuid: string; input: UpdateRoleInput }): Promise<Role> {
+  protected async execute(context: { uuid: string; input: UpdateRoleInput; actor: ActivityActor }): Promise<Role> {
     const { uuid, input } = context;
     await RoleModelFactory();
     const nextData: Record<string, unknown> = {
@@ -63,6 +64,21 @@ export class RoleUpdateUseCase extends BaseUseCase<string, Role, { uuid: string;
     await this.syncPermissions(uuid, input);
 
     return await RoleModel.toApi(this.roleData?.toJSON());
+  }
+
+  protected async postExec(
+    result: Role,
+    context?: { uuid: string; input: UpdateRoleInput; actor: ActivityActor },
+  ): Promise<Role> {
+    void recordActivityLog({
+      actor: context?.actor ?? null,
+      operation: "update",
+      entity: "role",
+      entity_uuid: context?.uuid ?? result.uuid,
+      origin: sanitizeActivityData(context?.input),
+      updated: result,
+    });
+    return super.postExec(result, context);
   }
 
   private async syncPermissions(uuid: string, input: UpdateRoleInput): Promise<void> {

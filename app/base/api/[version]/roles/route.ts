@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { connectDatabase } from "@/database/sequelize";
+import { actorFromRequest } from "@/libraries/Auth";
 import { withAuthorization } from "@/libraries/AuthorizedRoute";
 import { fail, getErrorStatus, ok, queryParam } from "@/libraries/Http";
 import { RoleCreateUseCase } from "@/app/base/useCases/role/RoleCreateUseCase";
@@ -34,7 +35,7 @@ async function handlePost(request: NextRequest) {
     await connectDatabase();
     const payload = (await request.json()) as Partial<CreateRoleInput>;
 
-    const role = await new RoleCreateUseCase().exec(payload as CreateRoleInput);
+    const role = await new RoleCreateUseCase().exec(payload as CreateRoleInput, await actorFromRequest(request));
     return ok(role, 201);
   } catch (error: any) {
     return fail(error.message ?? "Failed to create role.", getErrorStatus(error, 500));

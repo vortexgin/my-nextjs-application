@@ -1,5 +1,6 @@
 import Joi from "joi";
 import ActionModelFactory, { ActionModel } from "@/app/base/models/ActionModel";
+import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import NotFoundException from "@/exceptions/NotFoundException";
 
@@ -7,11 +8,11 @@ const deleteActionSchema = Joi.object({
   uuid: Joi.string().uuid({ version: "uuidv4" }).required(),
 });
 
-export class ActionDeleteUseCase extends BaseUseCase<string, boolean, string> {
+export class ActionDeleteUseCase extends BaseUseCase<string, boolean, { uuid: string; actor: ActivityActor }> {
 
   private actionData?: ActionModel | null;
 
-  protected async preExec(uuid: string): Promise<string> {
+  protected async preExec(uuid: string, actor?: ActivityActor): Promise<{ uuid: string; actor: ActivityActor }> {
     const validatedUuid = await this.validate<{ uuid: string }>(deleteActionSchema, { uuid });
 
     await ActionModelFactory();
@@ -20,10 +21,11 @@ export class ActionDeleteUseCase extends BaseUseCase<string, boolean, string> {
       throw new NotFoundException("Action not found")
     }
 
-    return validatedUuid.uuid;
+    return { uuid: validatedUuid.uuid, actor: actor ?? null };
   }
 
-  protected async execute(uuid: string): Promise<boolean> {
+  protected async execute(context: { uuid: string; actor: ActivityActor }): Promise<boolean> {
+    const { uuid } = context;
     await ActionModelFactory();
     const [affectedRows] = await ActionModel.update(
       {
@@ -37,5 +39,22 @@ export class ActionDeleteUseCase extends BaseUseCase<string, boolean, string> {
     );
 
     return affectedRows > 0;
+  }
+
+  protected async postExec(
+    result: boolean,
+    context?: { uuid: string; actor: ActivityActor },
+  ): Promise<boolean> {
+    if (result) {
+      void recordActivityLog({
+        actor: context?.actor ?? null,
+        operation: "delete",
+        entity: "action",
+        entity_uuid: context?.uuid ?? null,
+        origin: context?.uuid ? { uuid: context.uuid } : null,
+        updated: null,
+      });
+    }
+    return super.postExec(result, context);
   }
 }

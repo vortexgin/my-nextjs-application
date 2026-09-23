@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "crypto";
 import Joi from "joi";
 import UserModelFactory, { UserModel, type User } from "@/app/base/models/UserModel";
+import { recordActivityLog } from "@/app/base/models/ActivityLogModel";
 import SessionModelFactory from "@/app/sso/models/SessionModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import NotAuthorizedException from "@/exceptions/NotAuthorizedException";
@@ -63,5 +64,17 @@ export class LoginUseCase extends BaseUseCase<LoginInput, LoginResult, LoginInpu
       expired_at: session.expired_at.toISOString(),
       user,
     };
+  }
+
+  protected async postExec(result: LoginResult, context?: LoginInput): Promise<LoginResult> {
+    void recordActivityLog({
+      actor: result.user as unknown as Record<string, unknown>,
+      operation: "create",
+      entity: "session",
+      entity_uuid: result.token,
+      origin: context ? { email: context.email } : null,
+      updated: { expired_at: result.expired_at, user: result.user },
+    });
+    return super.postExec(result, context);
   }
 }

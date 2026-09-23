@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "crypto";
 import Joi, { Schema } from "joi";
 import UserModelFactory, { UserModel, type CreateUserInput, type User } from "@/app/base/models/UserModel";
+import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import RoleModelFactory, { RoleModel } from "@/app/base/models/RoleModel";
 import UserRoleModelFactory, { UserRoleModel } from "@/app/base/models/UserRoleModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
@@ -16,9 +17,10 @@ const createUserSchema = Joi.object({
   role_id: Joi.string().uuid({ version: "uuidv4" }).optional(),
 });
 
-export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, CreateUserInput> {
-  protected async preExec(input: CreateUserInput): Promise<CreateUserInput> {
-    return this.validate<CreateUserInput>(createUserSchema, input);
+export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, { input: CreateUserInput; actor: ActivityActor }> {
+  protected async preExec(input: CreateUserInput, actor?: ActivityActor): Promise<{ input: CreateUserInput; actor: ActivityActor }> {
+    const validated = await this.validate<CreateUserInput>(createUserSchema, input);
+    return { input: validated, actor: actor ?? null };
   }
 
   protected async validate<TValidated = CreateUserInput>(schema: Schema, input: CreateUserInput): Promise<TValidated> {
@@ -41,7 +43,8 @@ export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, Create
     return validatedInput;
   }
 
-  protected async execute(input: CreateUserInput): Promise<User> {
+  protected async execute(context: { input: CreateUserInput; actor: ActivityActor }): Promise<User> {
+    const { input } = context;
     await UserModelFactory();
     const user = await UserModel.create({
       uuid: randomUUID(),
@@ -58,6 +61,22 @@ export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, Create
       await UserRoleModel.create({ user_id: user.uuid, role_id: input.role_id });
     }
 
-    return await UserModel.toApi(user.toJSON());
+    const result = await UserModel.toApi(user.toJSON());
+    return result;
+  }
+
+  protected async postExec(
+    result: User,
+    context?: { input: CreateUserInput; actor: ActivityActor },
+  ): Promise<User> {
+    void recordActivityLog({
+      actor: context?.actor ?? null,
+      operation: "create",
+      entity: "user",
+      entity_uuid: result.uuid,
+      origin: sanitizeActivityData(context?.input),
+      updated: result,
+    });
+    return super.postExec(result, context);
   }
 }

@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "crypto";
 import Joi from "joi";
 import UserModelFactory, { UserModel } from "@/app/base/models/UserModel";
+import { recordActivityLog } from "@/app/base/models/ActivityLogModel";
 import PasswordResetModelFactory from "@/app/sso/models/PasswordResetModel";
 import { sendPasswordResetEmail } from "@/libraries/mail";
 import { appBaseUrl } from "@/libraries/Http";
@@ -54,5 +55,21 @@ export class ForgotPasswordUseCase extends BaseUseCase<ForgotPasswordInput, { me
     await sendPasswordResetEmail(input.email.trim().toLowerCase(), `${appBaseUrl()}/sso/update-password?token=${rawToken}`);
 
     return { message };
+  }
+
+  protected async postExec(
+    result: { message: string },
+    context?: ForgotPasswordInput,
+  ): Promise<{ message: string }> {
+    const actor = this.userData ? await UserModel.toApi(this.userData.toJSON()) : null;
+    void recordActivityLog({
+      actor: actor as unknown as Record<string, unknown> | null,
+      operation: "create",
+      entity: "password_reset",
+      entity_uuid: null,
+      origin: context ? { email: context.email } : null,
+      updated: result,
+    });
+    return super.postExec(result, context);
   }
 }

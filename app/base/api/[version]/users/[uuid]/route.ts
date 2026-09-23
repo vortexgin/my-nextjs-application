@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { connectDatabase } from "@/database/sequelize";
+import { actorFromRequest } from "@/libraries/Auth";
 import { withAuthorization } from "@/libraries/AuthorizedRoute";
 import { fail, getErrorStatus, ok } from "@/libraries/Http";
 import { UserDeleteUseCase } from "@/app/base/useCases/user/UserDeleteUseCase";
@@ -33,7 +34,7 @@ async function handlePut(
     const { uuid } = await params;
     const payload = (await request.json()) as UpdateUserInput;
 
-    const user = await new UserUpdateUseCase().exec(uuid, payload);
+    const user = await new UserUpdateUseCase().exec(uuid, payload, await actorFromRequest(request));
     return ok(user);
   } catch (error: any) {
     return fail(error.message ?? "Failed to update user.", getErrorStatus(error, 400));
@@ -41,13 +42,13 @@ async function handlePut(
 }
 
 async function handleDelete(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ uuid: string }> },
 ) {
   try {
     await connectDatabase();
     const { uuid } = await params;
-    await new UserDeleteUseCase().exec(uuid);
+    await new UserDeleteUseCase().exec(uuid, await actorFromRequest(request));
 
     return ok({ message: "User deleted successfully." });
   } catch (error: any) {

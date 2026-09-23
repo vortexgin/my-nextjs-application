@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { connectDatabase } from "@/database/sequelize";
+import { actorFromRequest } from "@/libraries/Auth";
 import { withAuthorization } from "@/libraries/AuthorizedRoute";
 import { fail, getErrorStatus, ok } from "@/libraries/Http";
 import { ActionDeleteUseCase } from "@/app/base/useCases/action/ActionDeleteUseCase";
@@ -33,7 +34,7 @@ async function handlePut(
     const { uuid } = await params;
     const payload = (await request.json()) as UpdateActionInput;
 
-    const action = await new ActionUpdateUseCase().exec(uuid, payload);
+    const action = await new ActionUpdateUseCase().exec(uuid, payload, await actorFromRequest(request));
     return ok(action);
   } catch (error: any) {
     return fail(error.message ?? "Failed to update action.", getErrorStatus(error, 400));
@@ -41,13 +42,13 @@ async function handlePut(
 }
 
 async function handleDelete(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ uuid: string }> },
 ) {
   try {
     await connectDatabase();
     const { uuid } = await params;
-    const deleted = await new ActionDeleteUseCase().exec(uuid);
+    const deleted = await new ActionDeleteUseCase().exec(uuid, await actorFromRequest(request));
 
     if (!deleted) {
       return fail("Action not found.", 404);

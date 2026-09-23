@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import Joi, { Schema } from "joi";
 import { Op } from "sequelize";
 import RoleModelFactory, { RoleModel, type CreateRoleInput, type Role } from "@/app/base/models/RoleModel";
+import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import ActionModelFactory, { ActionModel } from "@/app/base/models/ActionModel";
 import PermissionModelFactory, { PermissionModel } from "@/app/base/models/PermissionModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
@@ -15,9 +16,10 @@ const createRoleSchema = Joi.object({
   action_ids: Joi.array().items(Joi.string().uuid({ version: "uuidv4" })).optional(),
 });
 
-export class RoleCreateUseCase extends BaseUseCase<CreateRoleInput, Role, CreateRoleInput> {
-  protected async preExec(input: CreateRoleInput): Promise<CreateRoleInput> {
-    return this.validate<CreateRoleInput>(createRoleSchema, input);
+export class RoleCreateUseCase extends BaseUseCase<CreateRoleInput, Role, { input: CreateRoleInput; actor: ActivityActor }> {
+  protected async preExec(input: CreateRoleInput, actor?: ActivityActor): Promise<{ input: CreateRoleInput; actor: ActivityActor }> {
+    const validated = await this.validate<CreateRoleInput>(createRoleSchema, input);
+    return { input: validated, actor: actor ?? null };
   }
 
   protected async validate<TValidated = CreateRoleInput>(schema: Schema, input: CreateRoleInput): Promise<TValidated> {
@@ -34,7 +36,8 @@ export class RoleCreateUseCase extends BaseUseCase<CreateRoleInput, Role, Create
     return validatedInput;
   }
 
-  protected async execute(input: CreateRoleInput): Promise<Role> {
+  protected async execute(context: { input: CreateRoleInput; actor: ActivityActor }): Promise<Role> {
+    const { input } = context;
     await RoleModelFactory();
     const role = await RoleModel.create({
       uuid: randomUUID(),
@@ -51,7 +54,23 @@ export class RoleCreateUseCase extends BaseUseCase<CreateRoleInput, Role, Create
       );
     }
 
-    return await RoleModel.toApi(role.toJSON());
+    const result = await RoleModel.toApi(role.toJSON());
+    return result;
+  }
+
+  protected async postExec(
+    result: Role,
+    context?: { input: CreateRoleInput; actor: ActivityActor },
+  ): Promise<Role> {
+    void recordActivityLog({
+      actor: context?.actor ?? null,
+      operation: "create",
+      entity: "role",
+      entity_uuid: result.uuid,
+      origin: sanitizeActivityData(context?.input),
+      updated: result,
+    });
+    return super.postExec(result, context);
   }
 
   private async ensureActionsExist(actionIds?: string[]): Promise<void> {

@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import Joi, { Schema } from "joi";
 import ActionModelFactory, { ActionModel, type CreateActionInput, type Action } from "@/app/base/models/ActionModel";
+import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import DuplicateEntityException from "@/exceptions/DuplicateEntityException";
 
@@ -10,9 +11,10 @@ const createActionSchema = Joi.object({
   status: Joi.string().valid("active", "inactive", "deleted").optional(),
 });
 
-export class ActionCreateUseCase extends BaseUseCase<CreateActionInput, Action, CreateActionInput> {
-  protected async preExec(input: CreateActionInput): Promise<CreateActionInput> {
-    return this.validate<CreateActionInput>(createActionSchema, input);
+export class ActionCreateUseCase extends BaseUseCase<CreateActionInput, Action, { input: CreateActionInput; actor: ActivityActor }> {
+  protected async preExec(input: CreateActionInput, actor?: ActivityActor): Promise<{ input: CreateActionInput; actor: ActivityActor }> {
+    const validated = await this.validate<CreateActionInput>(createActionSchema, input);
+    return { input: validated, actor: actor ?? null };
   }
 
   protected async validate<TValidated = CreateActionInput>(schema: Schema, input: CreateActionInput): Promise<TValidated> {
@@ -27,7 +29,8 @@ export class ActionCreateUseCase extends BaseUseCase<CreateActionInput, Action, 
     return validatedInput;
   }
 
-  protected async execute(input: CreateActionInput): Promise<Action> {
+  protected async execute(context: { input: CreateActionInput; actor: ActivityActor }): Promise<Action> {
+    const { input } = context;
     await ActionModelFactory();
     const action = await ActionModel.create({
       uuid: randomUUID(),
@@ -37,6 +40,22 @@ export class ActionCreateUseCase extends BaseUseCase<CreateActionInput, Action, 
       deleted_at: null,
     });
 
-    return ActionModel.toApi(action.toJSON());
+    const result = ActionModel.toApi(action.toJSON());
+    return result;
+  }
+
+  protected async postExec(
+    result: Action,
+    context?: { input: CreateActionInput; actor: ActivityActor },
+  ): Promise<Action> {
+    void recordActivityLog({
+      actor: context?.actor ?? null,
+      operation: "create",
+      entity: "action",
+      entity_uuid: result.uuid,
+      origin: sanitizeActivityData(context?.input),
+      updated: result,
+    });
+    return super.postExec(result, context);
   }
 }

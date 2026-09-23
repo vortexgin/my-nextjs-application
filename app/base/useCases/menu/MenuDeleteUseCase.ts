@@ -1,5 +1,6 @@
 import Joi from "joi";
 import MenuModelFactory, { MenuModel } from "@/app/base/models/MenuModel";
+import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import NotFoundException from "@/exceptions/NotFoundException";
 
@@ -7,11 +8,11 @@ const deleteMenuSchema = Joi.object({
   uuid: Joi.string().uuid({ version: "uuidv4" }).required(),
 });
 
-export class MenuDeleteUseCase extends BaseUseCase<string, boolean, string> {
+export class MenuDeleteUseCase extends BaseUseCase<string, boolean, { uuid: string; actor: ActivityActor }> {
 
   private menuData?: MenuModel | null;
 
-  protected async preExec(uuid: string): Promise<string> {
+  protected async preExec(uuid: string, actor?: ActivityActor): Promise<{ uuid: string; actor: ActivityActor }> {
     const validatedUuid = await this.validate<{ uuid: string }>(deleteMenuSchema, { uuid });
 
     await MenuModelFactory();
@@ -20,10 +21,11 @@ export class MenuDeleteUseCase extends BaseUseCase<string, boolean, string> {
       throw new NotFoundException("Menu not found")
     }
 
-    return validatedUuid.uuid;
+    return { uuid: validatedUuid.uuid, actor: actor ?? null };
   }
 
-  protected async execute(uuid: string): Promise<boolean> {
+  protected async execute(context: { uuid: string; actor: ActivityActor }): Promise<boolean> {
+    const { uuid } = context;
     await MenuModelFactory();
     const [affectedRows] = await MenuModel.update(
       {
@@ -37,5 +39,22 @@ export class MenuDeleteUseCase extends BaseUseCase<string, boolean, string> {
     );
 
     return affectedRows > 0;
+  }
+
+  protected async postExec(
+    result: boolean,
+    context?: { uuid: string; actor: ActivityActor },
+  ): Promise<boolean> {
+    if (result) {
+      void recordActivityLog({
+        actor: context?.actor ?? null,
+        operation: "delete",
+        entity: "menu",
+        entity_uuid: context?.uuid ?? null,
+        origin: context?.uuid ? { uuid: context.uuid } : null,
+        updated: null,
+      });
+    }
+    return super.postExec(result, context);
   }
 }

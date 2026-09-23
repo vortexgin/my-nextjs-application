@@ -2,6 +2,7 @@ import { createHash } from "crypto";
 import Joi from "joi";
 import { Op } from "sequelize";
 import UserModelFactory, { UserModel, type UpdateUserInput, type User } from "@/app/base/models/UserModel";
+import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import RoleModelFactory, { RoleModel } from "@/app/base/models/RoleModel";
 import UserRoleModelFactory, { UserRoleModel } from "@/app/base/models/UserRoleModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
@@ -17,11 +18,11 @@ const updateUserSchema = Joi.object({
   role_id: Joi.string().uuid({ version: "uuidv4" }).allow(null).optional(),
 }).min(1);
 
-export class UserUpdateUseCase extends BaseUseCase<string, User, { uuid: string; input: UpdateUserInput }> {
+export class UserUpdateUseCase extends BaseUseCase<string, User, { uuid: string; input: UpdateUserInput; actor: ActivityActor }> {
 
   private userData?: UserModel | null;
 
-  protected async preExec(uuid: string, input: UpdateUserInput): Promise<{ uuid: string; input: UpdateUserInput }> {
+  protected async preExec(uuid: string, input: UpdateUserInput, actor?: ActivityActor): Promise<{ uuid: string; input: UpdateUserInput; actor: ActivityActor }> {
     const validatedInput = await this.validate<UpdateUserInput>(updateUserSchema, input);
 
     await UserModelFactory();
@@ -30,10 +31,10 @@ export class UserUpdateUseCase extends BaseUseCase<string, User, { uuid: string;
       throw new NotFoundException("User not found")
     }
 
-    return { uuid, input: validatedInput };
+    return { uuid, input: validatedInput, actor: actor ?? null };
   }
 
-  protected async execute(context: { uuid: string; input: UpdateUserInput }): Promise<User> {
+  protected async execute(context: { uuid: string; input: UpdateUserInput; actor: ActivityActor }): Promise<User> {
     const { uuid, input } = context;
     await UserModelFactory();
     const nextData: Record<string, unknown> = {
@@ -74,6 +75,21 @@ export class UserUpdateUseCase extends BaseUseCase<string, User, { uuid: string;
     await this.syncRole(uuid, input);
 
     return await UserModel.toApi(this.userData?.toJSON());
+  }
+
+  protected async postExec(
+    result: User,
+    context?: { uuid: string; input: UpdateUserInput; actor: ActivityActor },
+  ): Promise<User> {
+    void recordActivityLog({
+      actor: context?.actor ?? null,
+      operation: "update",
+      entity: "user",
+      entity_uuid: context?.uuid ?? result.uuid,
+      origin: sanitizeActivityData(context?.input),
+      updated: result,
+    });
+    return super.postExec(result, context);
   }
 
   private async syncRole(uuid: string, input: UpdateUserInput): Promise<void> {

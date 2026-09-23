@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { connectDatabase } from "@/database/sequelize";
+import { actorFromRequest } from "@/libraries/Auth";
 import { withAuthorization } from "@/libraries/AuthorizedRoute";
 import { fail, getErrorStatus, ok, queryParam } from "@/libraries/Http";
 import { MenuCreateUseCase } from "@/app/base/useCases/menu/MenuCreateUseCase";
@@ -35,7 +36,7 @@ async function handlePost(request: NextRequest) {
     await connectDatabase();
     const payload = (await request.json()) as Partial<CreateMenuInput>;
 
-    const menu = await new MenuCreateUseCase().exec(payload as CreateMenuInput);
+    const menu = await new MenuCreateUseCase().exec(payload as CreateMenuInput, await actorFromRequest(request));
     return ok(menu, 201);
   } catch (error: any) {
     return fail(error.message ?? "Failed to create menu.", getErrorStatus(error, 500));

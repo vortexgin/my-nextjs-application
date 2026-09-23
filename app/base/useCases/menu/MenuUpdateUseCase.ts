@@ -1,5 +1,6 @@
 import Joi from "joi";
 import MenuModelFactory, { MenuModel, type UpdateMenuInput, type Menu } from "@/app/base/models/MenuModel";
+import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import ActionModelFactory, { ActionModel } from "@/app/base/models/ActionModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import BadParameterException from "@/exceptions/BadParameterException";
@@ -16,11 +17,11 @@ const updateMenuSchema = Joi.object({
   weight: Joi.number().integer().min(0).optional(),
 }).min(1);
 
-export class MenuUpdateUseCase extends BaseUseCase<string, Menu, { uuid: string; input: UpdateMenuInput }> {
+export class MenuUpdateUseCase extends BaseUseCase<string, Menu, { uuid: string; input: UpdateMenuInput; actor: ActivityActor }> {
 
   private menuData?: MenuModel | null;
 
-  protected async preExec(uuid: string, input: UpdateMenuInput): Promise<{ uuid: string; input: UpdateMenuInput }> {
+  protected async preExec(uuid: string, input: UpdateMenuInput, actor?: ActivityActor): Promise<{ uuid: string; input: UpdateMenuInput; actor: ActivityActor }> {
     const validatedInput = await this.validate<UpdateMenuInput>(updateMenuSchema, input);
 
     await MenuModelFactory();
@@ -33,10 +34,10 @@ export class MenuUpdateUseCase extends BaseUseCase<string, Menu, { uuid: string;
       throw new BadParameterException("Menu cannot be its own parent.");
     }
 
-    return { uuid, input: validatedInput };
+    return { uuid, input: validatedInput, actor: actor ?? null };
   }
 
-  protected async execute(context: { uuid: string; input: UpdateMenuInput }): Promise<Menu> {
+  protected async execute(context: { uuid: string; input: UpdateMenuInput; actor: ActivityActor }): Promise<Menu> {
     const { input } = context;
     await MenuModelFactory();
     await ActionModelFactory();
@@ -96,5 +97,20 @@ export class MenuUpdateUseCase extends BaseUseCase<string, Menu, { uuid: string;
     await this.menuData?.update(nextData);
 
     return await MenuModel.toApi(this.menuData?.toJSON());
+  }
+
+  protected async postExec(
+    result: Menu,
+    context?: { uuid: string; input: UpdateMenuInput; actor: ActivityActor },
+  ): Promise<Menu> {
+    void recordActivityLog({
+      actor: context?.actor ?? null,
+      operation: "update",
+      entity: "menu",
+      entity_uuid: context?.uuid ?? result.uuid,
+      origin: sanitizeActivityData(context?.input),
+      updated: result,
+    });
+    return super.postExec(result, context);
   }
 }

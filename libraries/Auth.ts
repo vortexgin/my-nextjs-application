@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import type { NextRequest } from "next/server";
 import { redirect } from "next/navigation";
 import { Op, literal } from "sequelize";
 import { connectDatabase } from "@/database/sequelize";
@@ -64,4 +65,40 @@ export async function requireSession(): Promise<SessionInfo> {
     redirect("/sso");
   }
   return session;
+}
+
+/**
+ * Resolves the live session from an incoming request: session
+ * cookie first, `Authorization: Bearer <token>` fallback.
+ * Returns null when missing or unknown. Never throws.
+ */
+export async function getSessionFromRequest(request: NextRequest): Promise<SessionInfo | null> {
+  try {
+    const cookieToken = request.cookies.get(SESSION_COOKIE)?.value;
+    if (cookieToken) {
+      return await getSessionByToken(cookieToken);
+    }
+
+    const header = request.headers.get("authorization");
+    if (header && header.toLowerCase().startsWith("bearer ")) {
+      const token = header.slice(7).trim();
+      if (token) {
+        return await getSessionByToken(token);
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+/**
+ * Full session user object for activity logging. Null when
+ * anonymous. Never throws.
+ */
+export async function actorFromRequest(request: NextRequest): Promise<Record<string, unknown> | null> {
+  const session = await getSessionFromRequest(request).catch(() => null);
+  const user = session?.user;
+  return user && typeof user === "object" ? (user as Record<string, unknown>) : null;
 }

@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { connectDatabase } from "@/database/sequelize";
+import { actorFromRequest } from "@/libraries/Auth";
 import { withAuthorization } from "@/libraries/AuthorizedRoute";
 import { fail, getErrorStatus, ok, queryParam } from "@/libraries/Http";
 import { ActionCreateUseCase } from "@/app/base/useCases/action/ActionCreateUseCase";
@@ -33,7 +34,7 @@ async function handlePost(request: NextRequest) {
     await connectDatabase();
     const payload = (await request.json()) as Partial<CreateActionInput>;
 
-    const action = await new ActionCreateUseCase().exec(payload as CreateActionInput);
+    const action = await new ActionCreateUseCase().exec(payload as CreateActionInput, await actorFromRequest(request));
     return ok(action, 201);
   } catch (error: any) {
     return fail(error.message ?? "Failed to create action.", getErrorStatus(error, 500));
