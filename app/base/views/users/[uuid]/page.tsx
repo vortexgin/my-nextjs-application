@@ -1,0 +1,109 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { connectDatabase } from "@/database/sequelize";
+import { AuthComponent } from "@/components/AuthComponent";
+import { AccessDenied } from "@/components/AccessDenied";
+import { DeleteUserButton } from "@/app/base/components/user/DeleteUserButton";
+import { USER_LIST_PATH } from "@/app/base/views/users/paths";
+import { requireSession } from "@/libraries/Auth";
+import { UserGetUseCase } from "@/app/base/useCases/user/UserGetUseCase";
+
+export const metadata: Metadata = {
+  title: "User detail | VortexGin",
+};
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-1 border-b border-slate-100 py-3 last:border-0 sm:flex-row sm:items-baseline sm:gap-6">
+      <dt className="w-32 shrink-0 text-xs font-medium uppercase tracking-wider text-slate-500">{label}</dt>
+      <dd className="break-all text-sm text-slate-900">{value}</dd>
+    </div>
+  );
+}
+
+export default async function UserDetailPage({
+  params,
+}: {
+  params: Promise<{ uuid: string }>;
+}) {
+  const session = await requireSession();
+
+  const { uuid } = await params;
+  await connectDatabase();
+
+  let user;
+  try {
+    user = await new UserGetUseCase().exec(uuid);
+  } catch {
+    notFound();
+  }
+  if (!user) {
+    notFound();
+  }
+
+  return (
+    <AuthComponent
+      user={session.user}
+      permissions={session.permissions}
+      allowedPermissions={["base:user:view:detail"]}
+      accessDeniedComponent={
+        <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+          <AccessDenied />
+        </main>
+      }
+    >
+
+      <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl">
+          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur-sm sm:p-8">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-blue-600">Detail</p>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
+              {user.name}
+            </h1>
+
+            <dl className="mt-6">
+              <Row label="UUID" value={user.uuid} />
+              <Row label="Name" value={user.name} />
+              <Row label="Email" value={user.email} />
+              <Row label="Phone" value={user.phone_number} />
+              <Row label="Role" value={user.role ? `${user.role.name} (${user.role.slug})` : "—"} />
+              <Row label="Status" value={user.status} />
+              <Row label="Created" value={user.created_at} />
+              <Row label="Updated" value={user.updated_at} />
+            </dl>
+
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Link
+                href={USER_LIST_PATH}
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+              >
+                Back to list
+              </Link>
+              <AuthComponent
+                user={session.user}
+                permissions={session.permissions}
+                allowedPermissions={["base:user:view:update"]}
+              >
+                <Link
+                  href={`/base/views/users/${user.uuid}/edit`}
+                  className="inline-flex items-center justify-center rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
+                >
+                  Edit
+                </Link>
+              </AuthComponent>
+              <AuthComponent
+                user={session.user}
+                permissions={session.permissions}
+                allowedPermissions={["base:user:view:delete"]}
+              >
+                <DeleteUserButton uuid={user.uuid} label={user.name} redirectTo={USER_LIST_PATH} />
+              </AuthComponent>
+
+            </div>
+          </div>
+        </div>
+      </main>
+    </AuthComponent>
+  );
+}
