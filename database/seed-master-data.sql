@@ -145,6 +145,11 @@ VALUES
     'base:role:view:delete',
     'access for delete role',
     'active'
+  ),
+  (
+    'base:activity-log:list:list',
+    'Access for list activity log',
+    'active'
   ) ON CONFLICT (action) DO NOTHING;
 
 -- Sample admin user (password: admin123, sha256). users table has no DB defaults, supply explicitly.

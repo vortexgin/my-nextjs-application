@@ -59,7 +59,7 @@ export class ForgotPasswordUseCase extends BaseUseCase<ForgotPasswordInput, { me
 
   protected async postExec(
     result: { message: string },
-    context?: ForgotPasswordInput,
+    _context?: ForgotPasswordInput,
   ): Promise<{ message: string }> {
     const actor = this.userData ? await UserModel.toApi(this.userData.toJSON()) : null;
     void recordActivityLog({
@@ -67,9 +67,9 @@ export class ForgotPasswordUseCase extends BaseUseCase<ForgotPasswordInput, { me
       operation: "create",
       entity: "password_reset",
       entity_uuid: null,
-      origin: context ? { email: context.email } : null,
+      origin: null,
       updated: result,
     });
-    return super.postExec(result, context);
+    return super.postExec(result, _context);
   }
 }

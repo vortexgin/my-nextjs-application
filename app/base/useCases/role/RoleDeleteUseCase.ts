@@ -1,5 +1,5 @@
 import Joi from "joi";
-import RoleModelFactory, { RoleModel } from "@/app/base/models/RoleModel";
+import RoleModelFactory, { RoleModel, type Role } from "@/app/base/models/RoleModel";
 import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import NotFoundException from "@/exceptions/NotFoundException";
@@ -11,6 +11,7 @@ const deleteRoleSchema = Joi.object({
 export class RoleDeleteUseCase extends BaseUseCase<string, boolean, { uuid: string; actor: ActivityActor }> {
 
   private roleData?: RoleModel | null;
+  private beforeData?: Role | null;
 
   protected async preExec(uuid: string, actor?: ActivityActor): Promise<{ uuid: string; actor: ActivityActor }> {
     const validatedUuid = await this.validate<{ uuid: string }>(deleteRoleSchema, { uuid });
@@ -20,6 +21,7 @@ export class RoleDeleteUseCase extends BaseUseCase<string, boolean, { uuid: stri
     if (!this.roleData) {
       throw new NotFoundException("Role not found")
     }
+    this.beforeData = await RoleModel.toApi(this.roleData?.toJSON());
 
     return { uuid: validatedUuid.uuid, actor: actor ?? null };
   }
@@ -51,7 +53,7 @@ export class RoleDeleteUseCase extends BaseUseCase<string, boolean, { uuid: stri
         operation: "delete",
         entity: "role",
         entity_uuid: context?.uuid ?? null,
-        origin: context?.uuid ? { uuid: context.uuid } : null,
+        origin: this.beforeData ?? null,
         updated: null,
       });
     }

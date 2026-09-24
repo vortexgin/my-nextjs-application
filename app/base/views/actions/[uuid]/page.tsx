@@ -4,6 +4,7 @@ import Link from "next/link";
 import { connectDatabase } from "@/database/sequelize";
 import { AuthComponent } from "@/components/AuthComponent";
 import { AccessDenied } from "@/components/AccessDenied";
+import { ActivityTimeline } from "@/components/ActivityTimeline";
 import { DeleteActionButton } from "@/app/base/components/action/DeleteActionButton";
 import { ACTION_LIST_PATH } from "@/app/base/views/actions/paths";
 import { requireSession } from "@/libraries/Auth";
@@ -100,6 +101,7 @@ export default async function ActionDetailPage({
 
             </div>
           </div>
+          <ActivityTimeline entity="action" entityUuid={action.uuid} />
         </div>
       </main>
     </AuthComponent>

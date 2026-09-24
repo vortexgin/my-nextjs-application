@@ -1,5 +1,5 @@
 import Joi from "joi";
-import UserModelFactory, { UserModel } from "@/app/base/models/UserModel";
+import UserModelFactory, { UserModel, type User } from "@/app/base/models/UserModel";
 import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import NotFoundException from "@/exceptions/NotFoundException";
@@ -10,6 +10,7 @@ const deleteUserSchema = Joi.object({
 export class UserDeleteUseCase extends BaseUseCase<string, boolean, { uuid: string; actor: ActivityActor }> {
 
   private userData?: UserModel | null;
+  private beforeData?: User | null;
 
   protected async preExec(uuid: string, actor?: ActivityActor): Promise<{ uuid: string; actor: ActivityActor }> {
     const validatedUuid = await this.validate<{ uuid: string }>(deleteUserSchema, { uuid });
@@ -19,7 +20,7 @@ export class UserDeleteUseCase extends BaseUseCase<string, boolean, { uuid: stri
     if (!this.userData) {
       throw new NotFoundException("User not found")
     }
-
+    this.beforeData = await UserModel.toApi(this.userData?.toJSON());
     return { uuid: validatedUuid.uuid, actor: actor ?? null };
   }
 
@@ -50,7 +51,7 @@ export class UserDeleteUseCase extends BaseUseCase<string, boolean, { uuid: stri
         operation: "delete",
         entity: "user",
         entity_uuid: context?.uuid ?? null,
-        origin: context?.uuid ? { uuid: context.uuid } : null,
+        origin: this.beforeData ?? null,
         updated: null,
       });
     }

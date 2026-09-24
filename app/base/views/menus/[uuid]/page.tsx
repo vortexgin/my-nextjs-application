@@ -4,6 +4,7 @@ import Link from "next/link";
 import { connectDatabase } from "@/database/sequelize";
 import { AuthComponent } from "@/components/AuthComponent";
 import { AccessDenied } from "@/components/AccessDenied";
+import { ActivityTimeline } from "@/components/ActivityTimeline";
 import { DeleteMenuButton } from "@/app/base/components/menu/DeleteMenuButton";
 import { MENU_LIST_PATH } from "@/app/base/views/menus/paths";
 import { requireSession } from "@/libraries/Auth";
@@ -106,6 +107,7 @@ export default async function MenuDetailPage({
 
             </div>
           </div>
+          <ActivityTimeline entity="menu" entityUuid={menu.uuid} />
         </div>
       </main>
     </AuthComponent>

@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import Joi, { Schema } from "joi";
 import ActionModelFactory, { ActionModel, type CreateActionInput, type Action } from "@/app/base/models/ActionModel";
-import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
+import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import DuplicateEntityException from "@/exceptions/DuplicateEntityException";
 
@@ -53,7 +53,7 @@ export class ActionCreateUseCase extends BaseUseCase<CreateActionInput, Action, 
       operation: "create",
       entity: "action",
       entity_uuid: result.uuid,
-      origin: sanitizeActivityData(context?.input),
+      origin: null,
       updated: result,
     });
     return super.postExec(result, context);

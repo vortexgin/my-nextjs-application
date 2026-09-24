@@ -1,7 +1,7 @@
 import Joi from "joi";
 import { Op } from "sequelize";
 import ActionModelFactory, { ActionModel, type UpdateActionInput, type Action } from "@/app/base/models/ActionModel";
-import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
+import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import DuplicateEntityException from "@/exceptions/DuplicateEntityException";
 import NotFoundException from "@/exceptions/NotFoundException";
@@ -15,6 +15,7 @@ const updateActionSchema = Joi.object({
 export class ActionUpdateUseCase extends BaseUseCase<string, Action, { uuid: string; input: UpdateActionInput; actor: ActivityActor }> {
 
   private actionData?: ActionModel | null;
+  private beforeData?: Action | null;
 
   protected async preExec(uuid: string, input: UpdateActionInput, actor?: ActivityActor): Promise<{ uuid: string; input: UpdateActionInput; actor: ActivityActor }> {
     const validatedInput = await this.validate<UpdateActionInput>(updateActionSchema, input);
@@ -24,6 +25,7 @@ export class ActionUpdateUseCase extends BaseUseCase<string, Action, { uuid: str
     if (!this.actionData) {
       throw new NotFoundException("Action not found")
     }
+    this.beforeData = ActionModel.toApi(this.actionData?.toJSON());
 
     return { uuid, input: validatedInput, actor: actor ?? null };
   }
@@ -71,7 +73,7 @@ export class ActionUpdateUseCase extends BaseUseCase<string, Action, { uuid: str
       operation: "update",
       entity: "action",
       entity_uuid: context?.uuid ?? result.uuid,
-      origin: sanitizeActivityData(context?.input),
+      origin: this.beforeData ?? null,
       updated: result,
     });
     return super.postExec(result, context);

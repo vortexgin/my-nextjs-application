@@ -2,7 +2,7 @@ import { createHash } from "crypto";
 import Joi from "joi";
 import { Op } from "sequelize";
 import UserModelFactory, { UserModel, type UpdateUserInput, type User } from "@/app/base/models/UserModel";
-import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
+import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import RoleModelFactory, { RoleModel } from "@/app/base/models/RoleModel";
 import UserRoleModelFactory, { UserRoleModel } from "@/app/base/models/UserRoleModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
@@ -21,6 +21,7 @@ const updateUserSchema = Joi.object({
 export class UserUpdateUseCase extends BaseUseCase<string, User, { uuid: string; input: UpdateUserInput; actor: ActivityActor }> {
 
   private userData?: UserModel | null;
+  private beforeData?: User | null;
 
   protected async preExec(uuid: string, input: UpdateUserInput, actor?: ActivityActor): Promise<{ uuid: string; input: UpdateUserInput; actor: ActivityActor }> {
     const validatedInput = await this.validate<UpdateUserInput>(updateUserSchema, input);
@@ -30,6 +31,7 @@ export class UserUpdateUseCase extends BaseUseCase<string, User, { uuid: string;
     if (!this.userData) {
       throw new NotFoundException("User not found")
     }
+    this.beforeData = await UserModel.toApi(this.userData?.toJSON());
 
     return { uuid, input: validatedInput, actor: actor ?? null };
   }
@@ -86,7 +88,7 @@ export class UserUpdateUseCase extends BaseUseCase<string, User, { uuid: string;
       operation: "update",
       entity: "user",
       entity_uuid: context?.uuid ?? result.uuid,
-      origin: sanitizeActivityData(context?.input),
+      origin: this.beforeData ?? null,
       updated: result,
     });
     return super.postExec(result, context);

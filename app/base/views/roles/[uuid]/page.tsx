@@ -4,6 +4,7 @@ import Link from "next/link";
 import { connectDatabase } from "@/database/sequelize";
 import { AuthComponent } from "@/components/AuthComponent";
 import { AccessDenied } from "@/components/AccessDenied";
+import { ActivityTimeline } from "@/components/ActivityTimeline";
 import { DeleteRoleButton } from "@/app/base/components/role/DeleteRoleButton";
 import { ROLE_LIST_PATH } from "@/app/base/views/roles/paths";
 import { requireSession } from "@/libraries/Auth";
@@ -120,6 +121,7 @@ export default async function RoleDetailPage({
 
             </div>
           </div>
+          <ActivityTimeline entity="role" entityUuid={role.uuid} />
         </div>
       </main>
     </AuthComponent>

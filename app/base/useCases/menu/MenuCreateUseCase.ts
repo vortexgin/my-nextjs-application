@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import Joi, { Schema } from "joi";
 import MenuModelFactory, { MenuModel, type CreateMenuInput, type Menu } from "@/app/base/models/MenuModel";
-import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
+import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import ActionModelFactory, { ActionModel } from "@/app/base/models/ActionModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import NotFoundException from "@/exceptions/NotFoundException";
@@ -73,7 +73,7 @@ export class MenuCreateUseCase extends BaseUseCase<CreateMenuInput, Menu, { inpu
       operation: "create",
       entity: "menu",
       entity_uuid: result.uuid,
-      origin: sanitizeActivityData(context?.input),
+      origin: null,
       updated: result,
     });
     return super.postExec(result, context);

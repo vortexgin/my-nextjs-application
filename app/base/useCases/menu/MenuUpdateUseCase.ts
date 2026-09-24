@@ -1,6 +1,6 @@
 import Joi from "joi";
 import MenuModelFactory, { MenuModel, type UpdateMenuInput, type Menu } from "@/app/base/models/MenuModel";
-import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
+import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import ActionModelFactory, { ActionModel } from "@/app/base/models/ActionModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import BadParameterException from "@/exceptions/BadParameterException";
@@ -20,6 +20,7 @@ const updateMenuSchema = Joi.object({
 export class MenuUpdateUseCase extends BaseUseCase<string, Menu, { uuid: string; input: UpdateMenuInput; actor: ActivityActor }> {
 
   private menuData?: MenuModel | null;
+  private beforeData?: Menu | null;
 
   protected async preExec(uuid: string, input: UpdateMenuInput, actor?: ActivityActor): Promise<{ uuid: string; input: UpdateMenuInput; actor: ActivityActor }> {
     const validatedInput = await this.validate<UpdateMenuInput>(updateMenuSchema, input);
@@ -29,6 +30,7 @@ export class MenuUpdateUseCase extends BaseUseCase<string, Menu, { uuid: string;
     if (!this.menuData) {
       throw new NotFoundException("Menu not found")
     }
+    this.beforeData = await MenuModel.toApi(this.menuData?.toJSON());
 
     if (typeof validatedInput.parent === "string" && validatedInput.parent === uuid) {
       throw new BadParameterException("Menu cannot be its own parent.");
@@ -108,7 +110,7 @@ export class MenuUpdateUseCase extends BaseUseCase<string, Menu, { uuid: string;
       operation: "update",
       entity: "menu",
       entity_uuid: context?.uuid ?? result.uuid,
-      origin: sanitizeActivityData(context?.input),
+      origin: this.beforeData ?? null,
       updated: result,
     });
     return super.postExec(result, context);

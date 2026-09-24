@@ -4,6 +4,7 @@ import Link from "next/link";
 import { connectDatabase } from "@/database/sequelize";
 import { AuthComponent } from "@/components/AuthComponent";
 import { AccessDenied } from "@/components/AccessDenied";
+import { ActivityTimeline } from "@/components/ActivityTimeline";
 import { DeleteUserButton } from "@/app/base/components/user/DeleteUserButton";
 import { USER_LIST_PATH } from "@/app/base/views/users/paths";
 import { requireSession } from "@/libraries/Auth";
@@ -102,6 +103,7 @@ export default async function UserDetailPage({
 
             </div>
           </div>
+          <ActivityTimeline entity="user" entityUuid={user.uuid} />
         </div>
       </main>
     </AuthComponent>

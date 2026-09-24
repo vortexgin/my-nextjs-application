@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 import Joi from "joi";
-import UserModelFactory, { UserModel } from "@/app/base/models/UserModel";
+import UserModelFactory, { UserModel, type User } from "@/app/base/models/UserModel";
 import { recordActivityLog } from "@/app/base/models/ActivityLogModel";
 import PasswordResetModelFactory, { PasswordResetModel } from "@/app/sso/models/PasswordResetModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
@@ -21,6 +21,7 @@ export class UpdatePasswordUseCase extends BaseUseCase<UpdatePasswordInput, { me
 
   private resetData: PasswordResetModel | null = null;
   private actorData?: UserModel | null;
+  private beforeData?: User | null;
 
   protected async preExec(input: UpdatePasswordInput): Promise<UpdatePasswordInput> {
     const validated = await this.validate<UpdatePasswordInput>(updatePasswordSchema, input);
@@ -41,6 +42,7 @@ export class UpdatePasswordUseCase extends BaseUseCase<UpdatePasswordInput, { me
     if (!this.actorData) {
       throw new NotFoundException("User not found.");
     }
+    this.beforeData = await UserModel.toApi(this.actorData.toJSON());
 
     await this.actorData.update({
       password: createHash("sha256").update(input.password).digest("hex"),
@@ -61,7 +63,7 @@ export class UpdatePasswordUseCase extends BaseUseCase<UpdatePasswordInput, { me
       operation: "update",
       entity: "password",
       entity_uuid: this.actorData?.uuid ?? null,
-      origin: this.resetData?.user_id ? { user_uuid: this.resetData.user_id } : null,
+      origin: this.beforeData ?? null,
       updated: result,
     });
     return super.postExec(result, context);

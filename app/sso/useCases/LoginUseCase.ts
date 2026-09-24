@@ -66,15 +66,15 @@ export class LoginUseCase extends BaseUseCase<LoginInput, LoginResult, LoginInpu
     };
   }
 
-  protected async postExec(result: LoginResult, context?: LoginInput): Promise<LoginResult> {
+  protected async postExec(result: LoginResult, _context?: LoginInput): Promise<LoginResult> {
     void recordActivityLog({
       actor: result.user as unknown as Record<string, unknown>,
       operation: "create",
       entity: "session",
       entity_uuid: result.token,
-      origin: context ? { email: context.email } : null,
+      origin: null,
       updated: { expired_at: result.expired_at, user: result.user },
     });
-    return super.postExec(result, context);
+    return super.postExec(result, _context);
   }
 }

@@ -1,5 +1,5 @@
 import Joi from "joi";
-import ActionModelFactory, { ActionModel } from "@/app/base/models/ActionModel";
+import ActionModelFactory, { ActionModel, type Action } from "@/app/base/models/ActionModel";
 import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import NotFoundException from "@/exceptions/NotFoundException";
@@ -11,6 +11,7 @@ const deleteActionSchema = Joi.object({
 export class ActionDeleteUseCase extends BaseUseCase<string, boolean, { uuid: string; actor: ActivityActor }> {
 
   private actionData?: ActionModel | null;
+  private beforeData?: Action | null;
 
   protected async preExec(uuid: string, actor?: ActivityActor): Promise<{ uuid: string; actor: ActivityActor }> {
     const validatedUuid = await this.validate<{ uuid: string }>(deleteActionSchema, { uuid });
@@ -20,6 +21,7 @@ export class ActionDeleteUseCase extends BaseUseCase<string, boolean, { uuid: st
     if (!this.actionData) {
       throw new NotFoundException("Action not found")
     }
+    this.beforeData = ActionModel.toApi(this.actionData?.toJSON());
 
     return { uuid: validatedUuid.uuid, actor: actor ?? null };
   }
@@ -51,7 +53,7 @@ export class ActionDeleteUseCase extends BaseUseCase<string, boolean, { uuid: st
         operation: "delete",
         entity: "action",
         entity_uuid: context?.uuid ?? null,
-        origin: context?.uuid ? { uuid: context.uuid } : null,
+        origin: this.beforeData ?? null,
         updated: null,
       });
     }

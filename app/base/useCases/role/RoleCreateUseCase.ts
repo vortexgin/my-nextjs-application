@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import Joi, { Schema } from "joi";
 import { Op } from "sequelize";
 import RoleModelFactory, { RoleModel, type CreateRoleInput, type Role } from "@/app/base/models/RoleModel";
-import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
+import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import ActionModelFactory, { ActionModel } from "@/app/base/models/ActionModel";
 import PermissionModelFactory, { PermissionModel } from "@/app/base/models/PermissionModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
@@ -67,7 +67,7 @@ export class RoleCreateUseCase extends BaseUseCase<CreateRoleInput, Role, { inpu
       operation: "create",
       entity: "role",
       entity_uuid: result.uuid,
-      origin: sanitizeActivityData(context?.input),
+      origin: null,
       updated: result,
     });
     return super.postExec(result, context);

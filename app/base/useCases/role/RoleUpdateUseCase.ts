@@ -1,7 +1,7 @@
 import Joi from "joi";
 import { Op } from "sequelize";
 import RoleModelFactory, { RoleModel, type UpdateRoleInput, type Role } from "@/app/base/models/RoleModel";
-import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
+import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import ActionModelFactory, { ActionModel } from "@/app/base/models/ActionModel";
 import PermissionModelFactory, { PermissionModel } from "@/app/base/models/PermissionModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
@@ -18,6 +18,7 @@ const updateRoleSchema = Joi.object({
 export class RoleUpdateUseCase extends BaseUseCase<string, Role, { uuid: string; input: UpdateRoleInput; actor: ActivityActor }> {
 
   private roleData?: RoleModel | null;
+  private beforeData?: Role | null;
 
   protected async preExec(uuid: string, input: UpdateRoleInput, actor?: ActivityActor): Promise<{ uuid: string; input: UpdateRoleInput; actor: ActivityActor }> {
     const validatedInput = await this.validate<UpdateRoleInput>(updateRoleSchema, input);
@@ -27,6 +28,7 @@ export class RoleUpdateUseCase extends BaseUseCase<string, Role, { uuid: string;
     if (!this.roleData) {
       throw new NotFoundException("Role not found")
     }
+    this.beforeData = await RoleModel.toApi(this.roleData?.toJSON());
 
     return { uuid, input: validatedInput, actor: actor ?? null };
   }
@@ -75,7 +77,7 @@ export class RoleUpdateUseCase extends BaseUseCase<string, Role, { uuid: string;
       operation: "update",
       entity: "role",
       entity_uuid: context?.uuid ?? result.uuid,
-      origin: sanitizeActivityData(context?.input),
+      origin: this.beforeData ?? null,
       updated: result,
     });
     return super.postExec(result, context);

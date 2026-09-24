@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "crypto";
 import Joi, { Schema } from "joi";
 import UserModelFactory, { UserModel, type CreateUserInput, type User } from "@/app/base/models/UserModel";
-import { recordActivityLog, sanitizeActivityData, type ActivityActor } from "@/app/base/models/ActivityLogModel";
+import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import RoleModelFactory, { RoleModel } from "@/app/base/models/RoleModel";
 import UserRoleModelFactory, { UserRoleModel } from "@/app/base/models/UserRoleModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
@@ -74,7 +74,7 @@ export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, { inpu
       operation: "create",
       entity: "user",
       entity_uuid: result.uuid,
-      origin: sanitizeActivityData(context?.input),
+      origin: null,
       updated: result,
     });
     return super.postExec(result, context);

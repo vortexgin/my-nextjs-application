@@ -1,5 +1,5 @@
 import Joi from "joi";
-import MenuModelFactory, { MenuModel } from "@/app/base/models/MenuModel";
+import MenuModelFactory, { MenuModel, type Menu } from "@/app/base/models/MenuModel";
 import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import NotFoundException from "@/exceptions/NotFoundException";
@@ -11,6 +11,7 @@ const deleteMenuSchema = Joi.object({
 export class MenuDeleteUseCase extends BaseUseCase<string, boolean, { uuid: string; actor: ActivityActor }> {
 
   private menuData?: MenuModel | null;
+  private beforeData?: Menu | null;
 
   protected async preExec(uuid: string, actor?: ActivityActor): Promise<{ uuid: string; actor: ActivityActor }> {
     const validatedUuid = await this.validate<{ uuid: string }>(deleteMenuSchema, { uuid });
@@ -20,6 +21,7 @@ export class MenuDeleteUseCase extends BaseUseCase<string, boolean, { uuid: stri
     if (!this.menuData) {
       throw new NotFoundException("Menu not found")
     }
+    this.beforeData = await MenuModel.toApi(this.menuData?.toJSON());
 
     return { uuid: validatedUuid.uuid, actor: actor ?? null };
   }
@@ -51,7 +53,7 @@ export class MenuDeleteUseCase extends BaseUseCase<string, boolean, { uuid: stri
         operation: "delete",
         entity: "menu",
         entity_uuid: context?.uuid ?? null,
-        origin: context?.uuid ? { uuid: context.uuid } : null,
+        origin: this.beforeData ?? null,
         updated: null,
       });
     }
