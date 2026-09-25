@@ -97,7 +97,7 @@ export async function getEncrypted<T>(path: string): Promise<ApiEnvelope<T>> {
   return decryptEnvelope<T>(aesKey, (await response.json()) as { iv: string; data: string });
 }
 
-async function sendEncrypted<T>(method: "POST" | "PUT", path: string, payload: unknown): Promise<ApiEnvelope<T>> {
+async function sendEncrypted<T>(method: "POST" | "PUT" | "DELETE", path: string, payload?: unknown): Promise<ApiEnvelope<T>> {
   const { exchange, aesKey } = await startHandshake();
 
   const response = await fetch(path, {

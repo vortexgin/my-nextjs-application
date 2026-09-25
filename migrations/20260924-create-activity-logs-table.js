@@ -2,7 +2,7 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("activity_logs", {
+    await queryInterface.createTable("base_activity_logs", {
       uuid: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -44,10 +44,10 @@ module.exports = {
       },
     });
 
-    await queryInterface.addIndex("activity_logs", ["entity", "created_at"]);
+    await queryInterface.addIndex("base_activity_logs", ["entity", "created_at"]);
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable("activity_logs");
+    await queryInterface.dropTable("base_activity_logs");
   },
 };

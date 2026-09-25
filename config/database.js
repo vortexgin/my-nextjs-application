@@ -1,6 +1,7 @@
 'use strict';
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- dotenv optional, must load synchronously before env read
   require('dotenv/config');
 } catch {}
 

@@ -41,10 +41,25 @@ export class UserRoleModel extends Model<UserRoleModelAttributes, UserRoleModelC
   }
 }
 
+let userRoleModelPromise: Promise<typeof UserRoleModel> | null = null;
+
 export async function getUserRoleModel(): Promise<typeof UserRoleModel> {
+  if ((UserRoleModel as any).initialized) {
+    return UserRoleModel;
+  }
+  if (!userRoleModelPromise) {
+    userRoleModelPromise = initUserRoleModel().catch((error) => {
+      userRoleModelPromise = null;
+      throw error;
+    });
+  }
+  return userRoleModelPromise;
+}
+
+async function initUserRoleModel(): Promise<typeof UserRoleModel> {
   const sequelize = await getSequelizeInstance();
 
-  if (!(UserRoleModel as any).initialized) {
+  {
     UserRoleModel.init(
       {
         uuid: {
@@ -57,14 +72,14 @@ export async function getUserRoleModel(): Promise<typeof UserRoleModel> {
           type: DataTypes.UUID,
           allowNull: false,
           unique: true,
-          references: { model: "users", key: "uuid" },
+          references: { model: "base_users", key: "uuid" },
           onUpdate: "CASCADE",
           onDelete: "CASCADE",
         },
         role_id: {
           type: DataTypes.UUID,
           allowNull: false,
-          references: { model: "roles", key: "uuid" },
+          references: { model: "base_roles", key: "uuid" },
           onUpdate: "CASCADE",
           onDelete: "CASCADE",
         },
@@ -82,7 +97,7 @@ export async function getUserRoleModel(): Promise<typeof UserRoleModel> {
       {
         sequelize,
         modelName: "UserRole",
-        tableName: "user_roles",
+        tableName: "base_user_roles",
         timestamps: false,
         underscored: true,
       },
@@ -95,7 +110,6 @@ export async function getUserRoleModel(): Promise<typeof UserRoleModel> {
 
     (UserRoleModel as any).initialized = true;
   }
-
   return UserRoleModel;
 }
 

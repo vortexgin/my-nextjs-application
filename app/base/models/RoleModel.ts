@@ -84,10 +84,25 @@ export class RoleModel extends Model<RoleModelAttributes, RoleModelCreationAttri
   }
 }
 
+let roleModelPromise: Promise<typeof RoleModel> | null = null;
+
 export async function getRoleModel(): Promise<typeof RoleModel> {
+  if ((RoleModel as any).initialized) {
+    return RoleModel;
+  }
+  if (!roleModelPromise) {
+    roleModelPromise = initRoleModel().catch((error) => {
+      roleModelPromise = null;
+      throw error;
+    });
+  }
+  return roleModelPromise;
+}
+
+async function initRoleModel(): Promise<typeof RoleModel> {
   const sequelize = await getSequelizeInstance();
 
-  if (!(RoleModel as any).initialized) {
+  {
     RoleModel.init(
       {
         uuid: {
@@ -129,7 +144,7 @@ export async function getRoleModel(): Promise<typeof RoleModel> {
       {
         sequelize,
         modelName: "Role",
-        tableName: "roles",
+        tableName: "base_roles",
         timestamps: false,
         underscored: true,
       },
@@ -137,7 +152,6 @@ export async function getRoleModel(): Promise<typeof RoleModel> {
 
     (RoleModel as any).initialized = true;
   }
-
   return RoleModel;
 }
 

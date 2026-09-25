@@ -90,10 +90,25 @@ export class ActivityLogModel extends Model<ActivityLogModelAttributes, Activity
   }
 }
 
+let activityLogModelPromise: Promise<typeof ActivityLogModel> | null = null;
+
 export async function getActivityLogModel(): Promise<typeof ActivityLogModel> {
+  if ((ActivityLogModel as any).initialized) {
+    return ActivityLogModel;
+  }
+  if (!activityLogModelPromise) {
+    activityLogModelPromise = initActivityLogModel().catch((error) => {
+      activityLogModelPromise = null;
+      throw error;
+    });
+  }
+  return activityLogModelPromise;
+}
+
+async function initActivityLogModel(): Promise<typeof ActivityLogModel> {
   const sequelize = await getSequelizeInstance();
 
-  if (!(ActivityLogModel as any).initialized) {
+  {
     ActivityLogModel.init(
       {
         uuid: {
@@ -139,7 +154,7 @@ export async function getActivityLogModel(): Promise<typeof ActivityLogModel> {
       {
         sequelize,
         modelName: "ActivityLog",
-        tableName: "activity_logs",
+        tableName: "base_activity_logs",
         timestamps: false,
         underscored: true,
       },
@@ -147,7 +162,6 @@ export async function getActivityLogModel(): Promise<typeof ActivityLogModel> {
 
     (ActivityLogModel as any).initialized = true;
   }
-
   return ActivityLogModel;
 }
 

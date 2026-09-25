@@ -128,10 +128,25 @@ export class UserModel extends Model<UserModelAttributes, UserModelCreationAttri
   }
 }
 
+let userModelPromise: Promise<typeof UserModel> | null = null;
+
 export async function getUserModel(): Promise<typeof UserModel> {
+  if ((UserModel as any).initialized) {
+    return UserModel;
+  }
+  if (!userModelPromise) {
+    userModelPromise = initUserModel().catch((error) => {
+      userModelPromise = null;
+      throw error;
+    });
+  }
+  return userModelPromise;
+}
+
+async function initUserModel(): Promise<typeof UserModel> {
   const sequelize = await getSequelizeInstance();
 
-  if (!(UserModel as any).initialized) {
+  {
     UserModel.init(
       {
         uuid: {
@@ -184,7 +199,7 @@ export async function getUserModel(): Promise<typeof UserModel> {
       {
         sequelize,
         modelName: "User",
-        tableName: "users",
+        tableName: "base_users",
         timestamps: false,
         underscored: true,
       },
@@ -192,7 +207,6 @@ export async function getUserModel(): Promise<typeof UserModel> {
 
     (UserModel as any).initialized = true;
   }
-
   return UserModel;
 }
 

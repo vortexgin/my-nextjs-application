@@ -27,10 +27,25 @@ export class SessionModel extends Model<SessionModelAttributes, SessionModelCrea
   declare deleted_at: Date | null;
 }
 
+let sessionModelPromise: Promise<typeof SessionModel> | null = null;
+
 export async function getSessionModel(): Promise<typeof SessionModel> {
+  if ((SessionModel as any).initialized) {
+    return SessionModel;
+  }
+  if (!sessionModelPromise) {
+    sessionModelPromise = initSessionModel().catch((error) => {
+      sessionModelPromise = null;
+      throw error;
+    });
+  }
+  return sessionModelPromise;
+}
+
+async function initSessionModel(): Promise<typeof SessionModel> {
   const sequelize = await getSequelizeInstance();
 
-  if (!(SessionModel as any).initialized) {
+  {
     SessionModel.init(
       {
         uuid: {
@@ -71,7 +86,7 @@ export async function getSessionModel(): Promise<typeof SessionModel> {
       {
         sequelize,
         modelName: "Session",
-        tableName: "sessions",
+        tableName: "sso_sessions",
         timestamps: false,
         underscored: true,
       },
@@ -79,7 +94,6 @@ export async function getSessionModel(): Promise<typeof SessionModel> {
 
     (SessionModel as any).initialized = true;
   }
-
   return SessionModel;
 }
 

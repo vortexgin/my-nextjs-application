@@ -2,7 +2,7 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("permissions", {
+    await queryInterface.createTable("base_permissions", {
       uuid: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -12,14 +12,14 @@ module.exports = {
       role_id: {
         type: Sequelize.UUID,
         allowNull: false,
-        references: { model: "roles", key: "uuid" },
+        references: { model: "base_roles", key: "uuid" },
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
       action_id: {
         type: Sequelize.UUID,
         allowNull: false,
-        references: { model: "actions", key: "uuid" },
+        references: { model: "base_actions", key: "uuid" },
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
@@ -35,15 +35,15 @@ module.exports = {
       },
     });
 
-    await queryInterface.addConstraint("permissions", {
+    await queryInterface.addConstraint("base_permissions", {
       fields: ["role_id", "action_id"],
       type: "unique",
-      name: "permissions_role_action_unique",
+      name: "base_permissions_role_action_unique",
     });
-    await queryInterface.addIndex("permissions", ["action_id"]);
+    await queryInterface.addIndex("base_permissions", ["action_id"]);
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable("permissions");
+    await queryInterface.dropTable("base_permissions");
   },
 };

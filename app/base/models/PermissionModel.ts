@@ -41,10 +41,25 @@ export class PermissionModel extends Model<PermissionModelAttributes, Permission
   }
 }
 
+let permissionModelPromise: Promise<typeof PermissionModel> | null = null;
+
 export async function getPermissionModel(): Promise<typeof PermissionModel> {
+  if ((PermissionModel as any).initialized) {
+    return PermissionModel;
+  }
+  if (!permissionModelPromise) {
+    permissionModelPromise = initPermissionModel().catch((error) => {
+      permissionModelPromise = null;
+      throw error;
+    });
+  }
+  return permissionModelPromise;
+}
+
+async function initPermissionModel(): Promise<typeof PermissionModel> {
   const sequelize = await getSequelizeInstance();
 
-  if (!(PermissionModel as any).initialized) {
+  {
     PermissionModel.init(
       {
         uuid: {
@@ -56,14 +71,14 @@ export async function getPermissionModel(): Promise<typeof PermissionModel> {
         role_id: {
           type: DataTypes.UUID,
           allowNull: false,
-          references: { model: "roles", key: "uuid" },
+          references: { model: "base_roles", key: "uuid" },
           onUpdate: "CASCADE",
           onDelete: "CASCADE",
         },
         action_id: {
           type: DataTypes.UUID,
           allowNull: false,
-          references: { model: "actions", key: "uuid" },
+          references: { model: "base_actions", key: "uuid" },
           onUpdate: "CASCADE",
           onDelete: "CASCADE",
         },
@@ -81,7 +96,7 @@ export async function getPermissionModel(): Promise<typeof PermissionModel> {
       {
         sequelize,
         modelName: "Permission",
-        tableName: "permissions",
+        tableName: "base_permissions",
         timestamps: false,
         underscored: true,
       },
@@ -94,7 +109,6 @@ export async function getPermissionModel(): Promise<typeof PermissionModel> {
 
     (PermissionModel as any).initialized = true;
   }
-
   return PermissionModel;
 }
 

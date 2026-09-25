@@ -2,7 +2,7 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("menus", {
+    await queryInterface.createTable("base_menus", {
       uuid: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -17,7 +17,7 @@ module.exports = {
         type: Sequelize.UUID,
         allowNull: true,
         defaultValue: null,
-        references: { model: "menus", key: "uuid" },
+        references: { model: "base_menus", key: "uuid" },
         onUpdate: "CASCADE",
         onDelete: "SET NULL",
       },
@@ -28,7 +28,7 @@ module.exports = {
       action_id: {
         type: Sequelize.UUID,
         allowNull: false,
-        references: { model: "actions", key: "uuid" },
+        references: { model: "base_actions", key: "uuid" },
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
@@ -68,11 +68,11 @@ module.exports = {
       },
     });
 
-    await queryInterface.addIndex("menus", ["action_id"]);
-    await queryInterface.addIndex("menus", ["parent"]);
+    await queryInterface.addIndex("base_menus", ["action_id"]);
+    await queryInterface.addIndex("base_menus", ["parent"]);
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable("menus");
+    await queryInterface.dropTable("base_menus");
   },
 };

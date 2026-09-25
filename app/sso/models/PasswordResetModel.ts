@@ -33,10 +33,25 @@ export class PasswordResetModel extends Model<PasswordResetModelAttributes, Pass
   declare created_at: Date;
 }
 
+let passwordResetModelPromise: Promise<typeof PasswordResetModel> | null = null;
+
 export async function getPasswordResetModel(): Promise<typeof PasswordResetModel> {
+  if ((PasswordResetModel as any).initialized) {
+    return PasswordResetModel;
+  }
+  if (!passwordResetModelPromise) {
+    passwordResetModelPromise = initPasswordResetModel().catch((error) => {
+      passwordResetModelPromise = null;
+      throw error;
+    });
+  }
+  return passwordResetModelPromise;
+}
+
+async function initPasswordResetModel(): Promise<typeof PasswordResetModel> {
   const sequelize = await getSequelizeInstance();
 
-  if (!(PasswordResetModel as any).initialized) {
+  {
     PasswordResetModel.init(
       {
         uuid: {
@@ -79,7 +94,7 @@ export async function getPasswordResetModel(): Promise<typeof PasswordResetModel
       {
         sequelize,
         modelName: "PasswordReset",
-        tableName: "password_resets",
+        tableName: "sso_password_resets",
         timestamps: false,
         underscored: true,
       },
@@ -90,7 +105,6 @@ export async function getPasswordResetModel(): Promise<typeof PasswordResetModel
 
     (PasswordResetModel as any).initialized = true;
   }
-
   return PasswordResetModel;
 }
 

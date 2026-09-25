@@ -2,7 +2,7 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("base_roles", {
+    await queryInterface.createTable("sass_organization", {
       uuid: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -13,10 +13,22 @@ module.exports = {
         type: Sequelize.STRING(120),
         allowNull: false,
       },
-      slug: {
+      address: {
+        type: Sequelize.STRING(255),
+        allowNull: false,
+      },
+      email: {
         type: Sequelize.STRING(160),
         allowNull: false,
-        unique: true,
+      },
+      phone: {
+        type: Sequelize.STRING(30),
+        allowNull: false,
+      },
+      npwp: {
+        type: Sequelize.STRING(30),
+        allowNull: true,
+        defaultValue: null,
       },
       status: {
         type: Sequelize.ENUM("active", "inactive", "deleted"),
@@ -39,9 +51,11 @@ module.exports = {
         defaultValue: null,
       },
     });
+
+    await queryInterface.addIndex("sass_organization", ["email"]);
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable("base_roles");
+    await queryInterface.dropTable("sass_organization");
   },
 };

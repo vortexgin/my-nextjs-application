@@ -85,10 +85,25 @@ export class MenuModel extends Model<MenuModelAttributes, MenuModelCreationAttri
   }
 }
 
+let menuModelPromise: Promise<typeof MenuModel> | null = null;
+
 export async function getMenuModel(): Promise<typeof MenuModel> {
+  if ((MenuModel as any).initialized) {
+    return MenuModel;
+  }
+  if (!menuModelPromise) {
+    menuModelPromise = initMenuModel().catch((error) => {
+      menuModelPromise = null;
+      throw error;
+    });
+  }
+  return menuModelPromise;
+}
+
+async function initMenuModel(): Promise<typeof MenuModel> {
   const sequelize = await getSequelizeInstance();
 
-  if (!(MenuModel as any).initialized) {
+  {
     MenuModel.init(
       {
         uuid: {
@@ -105,7 +120,7 @@ export async function getMenuModel(): Promise<typeof MenuModel> {
           type: DataTypes.UUID,
           allowNull: true,
           defaultValue: null,
-          references: { model: "menus", key: "uuid" },
+          references: { model: "base_menus", key: "uuid" },
           onUpdate: "CASCADE",
           onDelete: "SET NULL",
         },
@@ -116,7 +131,7 @@ export async function getMenuModel(): Promise<typeof MenuModel> {
         action_id: {
           type: DataTypes.UUID,
           allowNull: false,
-          references: { model: "actions", key: "uuid" },
+          references: { model: "base_actions", key: "uuid" },
           onUpdate: "CASCADE",
           onDelete: "CASCADE",
         },
@@ -158,7 +173,7 @@ export async function getMenuModel(): Promise<typeof MenuModel> {
       {
         sequelize,
         modelName: "Menu",
-        tableName: "menus",
+        tableName: "base_menus",
         timestamps: false,
         underscored: true,
       },
@@ -170,7 +185,6 @@ export async function getMenuModel(): Promise<typeof MenuModel> {
 
     (MenuModel as any).initialized = true;
   }
-
   return MenuModel;
 }
 

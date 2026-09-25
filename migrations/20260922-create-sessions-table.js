@@ -2,7 +2,7 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("sessions", {
+    await queryInterface.createTable("sso_sessions", {
       uuid: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -39,10 +39,10 @@ module.exports = {
       },
     });
 
-    await queryInterface.addIndex("sessions", ["expired_at"]);
+    await queryInterface.addIndex("sso_sessions", ["expired_at"]);
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable("sessions");
+    await queryInterface.dropTable("sso_sessions");
   },
 };

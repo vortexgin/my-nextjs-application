@@ -2,7 +2,7 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("password_resets", {
+    await queryInterface.createTable("sso_password_resets", {
       uuid: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -12,7 +12,7 @@ module.exports = {
       user_id: {
         type: Sequelize.UUID,
         allowNull: false,
-        references: { model: "users", key: "uuid" },
+        references: { model: "base_users", key: "uuid" },
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
@@ -41,11 +41,11 @@ module.exports = {
       },
     });
 
-    await queryInterface.addIndex("password_resets", ["user_id"]);
-    await queryInterface.addIndex("password_resets", ["expires_at"]);
+    await queryInterface.addIndex("sso_password_resets", ["user_id"]);
+    await queryInterface.addIndex("sso_password_resets", ["expires_at"]);
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable("password_resets");
+    await queryInterface.dropTable("sso_password_resets");
   },
 };

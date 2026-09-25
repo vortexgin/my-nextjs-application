@@ -2,7 +2,7 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("users", {
+    await queryInterface.createTable("base_users", {
       uuid: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -50,6 +50,6 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable("users");
+    await queryInterface.dropTable("base_users");
   },
 };

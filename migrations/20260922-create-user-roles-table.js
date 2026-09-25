@@ -2,7 +2,7 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("user_roles", {
+    await queryInterface.createTable("base_user_roles", {
       uuid: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -13,14 +13,14 @@ module.exports = {
         type: Sequelize.UUID,
         allowNull: false,
         unique: true,
-        references: { model: "users", key: "uuid" },
+        references: { model: "base_users", key: "uuid" },
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
       role_id: {
         type: Sequelize.UUID,
         allowNull: false,
-        references: { model: "roles", key: "uuid" },
+        references: { model: "base_roles", key: "uuid" },
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
@@ -36,10 +36,10 @@ module.exports = {
       },
     });
 
-    await queryInterface.addIndex("user_roles", ["role_id"]);
+    await queryInterface.addIndex("base_user_roles", ["role_id"]);
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable("user_roles");
+    await queryInterface.dropTable("base_user_roles");
   },
 };

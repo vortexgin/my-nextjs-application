@@ -51,10 +51,25 @@ export class ActionModel extends Model<ActionModelAttributes, ActionModelCreatio
   }
 }
 
+let actionModelPromise: Promise<typeof ActionModel> | null = null;
+
 export async function getActionModel(): Promise<typeof ActionModel> {
+  if ((ActionModel as any).initialized) {
+    return ActionModel;
+  }
+  if (!actionModelPromise) {
+    actionModelPromise = initActionModel().catch((error) => {
+      actionModelPromise = null;
+      throw error;
+    });
+  }
+  return actionModelPromise;
+}
+
+async function initActionModel(): Promise<typeof ActionModel> {
   const sequelize = await getSequelizeInstance();
 
-  if (!(ActionModel as any).initialized) {
+  {
     ActionModel.init(
       {
         uuid: {
@@ -97,7 +112,7 @@ export async function getActionModel(): Promise<typeof ActionModel> {
       {
         sequelize,
         modelName: "Action",
-        tableName: "actions",
+        tableName: "base_actions",
         timestamps: false,
         underscored: true,
       },
@@ -105,7 +120,6 @@ export async function getActionModel(): Promise<typeof ActionModel> {
 
     (ActionModel as any).initialized = true;
   }
-
   return ActionModel;
 }
 
