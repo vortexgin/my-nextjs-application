@@ -3,9 +3,11 @@ import Joi, { Schema } from "joi";
 import UserModelFactory, { UserModel, type CreateUserInput, type User } from "@/app/base/models/UserModel";
 import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import RoleModelFactory, { RoleModel } from "@/app/base/models/RoleModel";
+import { ADMIN_ROLE_SLUG } from "@/libraries/Permissions";
 import UserRoleModelFactory, { UserRoleModel } from "@/app/base/models/UserRoleModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import DuplicateEntityException from "@/exceptions/DuplicateEntityException";
+import ForbiddenException from "@/exceptions/ForbiddenException";
 import NotFoundException from "@/exceptions/NotFoundException";
 
 const createUserSchema = Joi.object({
@@ -15,11 +17,22 @@ const createUserSchema = Joi.object({
   password: Joi.string().min(6).required(),
   status: Joi.string().valid("active", "inactive", "deleted").optional(),
   role_id: Joi.string().uuid({ version: "uuidv4" }).optional(),
+  organization_id: Joi.string().uuid({ version: "uuidv4" }).optional(),
 });
 
 export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, { input: CreateUserInput; actor: ActivityActor }> {
   protected async preExec(input: CreateUserInput, actor?: ActivityActor): Promise<{ input: CreateUserInput; actor: ActivityActor }> {
     const validated = await this.validate<CreateUserInput>(createUserSchema, input);
+    if (validated.organization_id) {
+      await UserModel.requireOrganizationPermission(actor);
+    }
+    if (validated.role_id) {
+      await RoleModelFactory();
+      const target = await RoleModel.findOne({ where: { uuid: validated.role_id, deleted_at: null } });
+      if (target?.slug === ADMIN_ROLE_SLUG && !(await UserModel.isAdmin(actor))) {
+        throw new ForbiddenException("Insufficient permissions.");
+      }
+    }
     return { input: validated, actor: actor ?? null };
   }
 
@@ -37,6 +50,18 @@ export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, { inpu
       const role = await RoleModel.findOne({ where: { uuid: input.role_id, deleted_at: null } });
       if (!role) {
         throw new NotFoundException("Role not found.");
+      }
+    }
+
+    if (input.organization_id) {
+      const models = await UserModel.loadOrganizationLinkModels();
+      if (models) {
+        const organization = await models.OrganizationModel.findOne({
+          where: { uuid: input.organization_id, deleted_at: null },
+        });
+        if (!organization) {
+          throw new NotFoundException("Organization not found.");
+        }
       }
     }
 
@@ -60,6 +85,7 @@ export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, { inpu
       await UserRoleModelFactory();
       await UserRoleModel.create({ user_id: user.uuid, role_id: input.role_id });
     }
+    await UserModel.assignOrganization(user.uuid, input.organization_id);
 
     const result = await UserModel.toApi(user.toJSON());
     return result;

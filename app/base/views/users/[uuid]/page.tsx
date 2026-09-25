@@ -69,6 +69,7 @@ export default async function UserDetailPage({
               <Row label="Email" value={user.email} />
               <Row label="Phone" value={user.phone_number} />
               <Row label="Role" value={user.role ? `${user.role.name} (${user.role.slug})` : "—"} />
+              <Row label="Organization" value={user.organization ? user.organization.name : "—"} />
               <Row label="Status" value={user.status} />
               <Row label="Created" value={user.created_at} />
               <Row label="Updated" value={user.updated_at} />

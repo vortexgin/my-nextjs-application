@@ -11,6 +11,10 @@
  * Role slug comes from the explicit argument, falling back to
  * `user.role.slug` when the user is an object carrying it.
  */
+export const UPDATE_ORGANIZATION_PERMISSION = "base:user:view:update-organization";
+
+export const ADMIN_ROLE_SLUG = "admin";
+
 export function hasPermission(
   user: unknown,
   permissions?: string[] | null,

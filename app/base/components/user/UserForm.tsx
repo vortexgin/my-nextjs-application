@@ -6,15 +6,25 @@ import { useEffect, useState, type FormEvent } from "react";
 import { USER_LIST_PATH } from "@/app/base/views/users/paths";
 import type { Role } from "@/app/base/models/RoleModel";
 import type { User } from "@/app/base/models/UserModel";
+import type { Organization } from "@/app/sass/models/OrganizationModel";
+import { AuthComponent } from "@/components/AuthComponent";
 import { getEncrypted, postEncrypted, putEncrypted } from "@/libraries/EncryptedFetch";
+import { UPDATE_ORGANIZATION_PERMISSION, hasPermission } from "@/libraries/Permissions";
 
 const API_PATH = "/base/api/v1/users";
 const ROLE_API_PATH = "/base/api/v1/roles";
+const ORGANIZATION_API_PATH = "/sass/api/v1/organizations";
 
 const inputClass =
   "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100";
 
 type RoleOption = {
+  uuid: string;
+  name: string;
+  slug: string;
+};
+
+type OrganizationOption = {
   uuid: string;
   name: string;
 };
@@ -23,10 +33,14 @@ export function UserForm({
   mode,
   uuid,
   initial,
+  session,
+  adminRoleSlug,
 }: {
   mode: "create" | "edit";
   uuid?: string;
-  initial?: Pick<User, "name" | "email" | "phone_number" | "status"> & { role_id?: string };
+  initial?: Pick<User, "name" | "email" | "phone_number" | "status"> & { role_id?: string; organization_id?: string };
+  session: { user: unknown; permissions: string[] };
+  adminRoleSlug: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -35,12 +49,27 @@ export function UserForm({
   const [roleId, setRoleId] = useState(initial?.role_id ?? "");
   const [optionsLoading, setOptionsLoading] = useState(true);
   const [optionsError, setOptionsError] = useState("");
+  const [organizationOptions, setOrganizationOptions] = useState<OrganizationOption[]>([]);
+  const [organizationId, setOrganizationId] = useState(initial?.organization_id ?? "");
+  const [organizationAvailable, setOrganizationAvailable] = useState(true);
+  const canManageOrganization = hasPermission(session.user, session.permissions, [UPDATE_ORGANIZATION_PERMISSION]);
+
+  const viewerIsAdmin =
+    (session.user as { role?: { slug?: unknown } } | null)?.role?.slug === adminRoleSlug;
 
   // Keep current role selectable even when missing from fetched list.
-  const roleItems =
+  // Non-admin viewers never see the admin role as a choice.
+  const roleItems = (
     initial?.role_id && !roleOptions.some((option) => option.uuid === initial.role_id)
-      ? [{ uuid: initial.role_id, name: initial.role_id }, ...roleOptions]
-      : roleOptions;
+      ? [{ uuid: initial.role_id, name: initial.role_id, slug: "" }, ...roleOptions]
+      : roleOptions
+  ).filter((option) => viewerIsAdmin || option.slug !== adminRoleSlug);
+
+  // Keep current organization selectable even when missing from fetched list.
+  const organizationItems =
+    initial?.organization_id && !organizationOptions.some((option) => option.uuid === initial.organization_id)
+      ? [{ uuid: initial.organization_id, name: initial.organization_id }, ...organizationOptions]
+      : organizationOptions;
 
   useEffect(() => {
     let active = true;
@@ -57,7 +86,7 @@ export function UserForm({
           return;
         }
         setRoleOptions(
-          (envelope.data ?? []).map((role) => ({ uuid: role.uuid, name: role.name })),
+          (envelope.data ?? []).map((role) => ({ uuid: role.uuid, name: role.name, slug: role.slug })),
         );
       } catch {
         if (active) {
@@ -74,6 +103,37 @@ export function UserForm({
     };
   }, []);
 
+  useEffect(() => {
+    if (!canManageOrganization) {
+      return;
+    }
+    let active = true;
+    (async () => {
+      try {
+        const envelope = await getEncrypted<Organization[]>(
+          `${ORGANIZATION_API_PATH}?sortProperty=name&sortDirection=asc&limit=100`,
+        );
+        if (!active) {
+          return;
+        }
+        if (!envelope.success) {
+          setOrganizationAvailable(false);
+          return;
+        }
+        setOrganizationOptions(
+          (envelope.data ?? []).map((organization) => ({ uuid: organization.uuid, name: organization.name })),
+        );
+      } catch {
+        if (active) {
+          setOrganizationAvailable(false);
+        }
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [canManageOrganization]);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -89,6 +149,9 @@ export function UserForm({
         status: String(formData.get("status") ?? "active"),
         role_id: roleId || null,
       };
+      if (organizationAvailable && canManageOrganization) {
+        payload.organization_id = organizationId || null;
+      }
       if (mode === "create") {
         payload.password = passwordRaw;
       } else if (passwordRaw) {
@@ -96,6 +159,9 @@ export function UserForm({
       }
       if (mode === "create" && !roleId) {
         delete payload.role_id;
+      }
+      if (mode === "create" && !organizationId) {
+        delete payload.organization_id;
       }
 
       const envelope =
@@ -211,6 +277,34 @@ export function UserForm({
               User role assignment is managed here through the user API.
             </span>
           </label>
+
+          {organizationAvailable ? (
+            <AuthComponent
+              user={session.user}
+              permissions={session.permissions}
+              allowedPermissions={[UPDATE_ORGANIZATION_PERMISSION]}
+            >
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">Organization</span>
+              <select
+                name="organization_id"
+                value={organizationId}
+                onChange={(event) => setOrganizationId(event.target.value)}
+                className={inputClass}
+              >
+                <option value="">— No organization —</option>
+                {organizationItems.map((option) => (
+                  <option key={option.uuid} value={option.uuid}>
+                    {option.name}
+                  </option>
+                ))}
+              </select>
+              <span className="mt-2 block text-xs text-slate-500">
+                User organization assignment is managed here through the user API.
+              </span>
+            </label>
+            </AuthComponent>
+          ) : null}
 
           {optionsError ? (
             <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

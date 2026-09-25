@@ -1,9 +1,14 @@
 import { DataTypes, Model } from "sequelize";
 import { getSequelizeInstance } from "@/database/sequelize";
 import RoleModelFactory, { RoleModel, type Role } from "@/app/base/models/RoleModel";
+import { ADMIN_ROLE_SLUG } from "@/libraries/Permissions";
 import ActionModelFactory, { ActionModel } from "@/app/base/models/ActionModel";
 import PermissionModelFactory, { PermissionModel } from "@/app/base/models/PermissionModel";
 import UserRoleModelFactory, { UserRoleModel } from "@/app/base/models/UserRoleModel";
+import NotFoundException from "@/exceptions/NotFoundException";
+import ForbiddenException from "@/exceptions/ForbiddenException";
+import { UPDATE_ORGANIZATION_PERMISSION } from "@/libraries/Permissions";
+import type { Organization } from "@/app/sass/models/OrganizationModel";
 
 type PermissionWithAction = PermissionModel & { action?: ActionModel | null };
 type RoleWithPermissions = RoleModel & { permissions?: PermissionWithAction[] };
@@ -21,6 +26,7 @@ export type User = {
   updated_at: string;
   deleted_at: string | null;
   role: Role | null;
+  organization: Organization | null;
 };
 
 export type CreateUserInput = {
@@ -30,6 +36,7 @@ export type CreateUserInput = {
   password: string;
   status?: UserStatus;
   role_id?: string | null;
+  organization_id?: string | null;
 };
 
 export type UpdateUserInput = Partial<CreateUserInput> & { status?: UserStatus };
@@ -65,7 +72,123 @@ export class UserModel extends Model<UserModelAttributes, UserModelCreationAttri
       updated_at: user.updated_at ? new Date(user.updated_at).toISOString() : new Date().toISOString(),
       deleted_at: user.deleted_at ? new Date(user.deleted_at).toISOString() : null,
       role: await UserModel.resolveRole(user?.uuid),
+      organization: await UserModel.resolveOrganization(user?.uuid),
     };
+  }
+
+  /**
+   * Loads sass organization-link models only when that module exists
+   * and its table is present. Null otherwise (feature off).
+   */
+  static async loadOrganizationLinkModels(): Promise<{
+    OrganizationUserModel: any;
+    OrganizationModel: any;
+  } | null> {
+    try {
+      const linkModule = await import("@/app/sass/models/OrganizationUserModel");
+      const orgModule = await import("@/app/sass/models/OrganizationModel");
+      const OrganizationUserModel = await linkModule.getOrganizationUserModel();
+      const OrganizationModel = await orgModule.getOrganizationModel();
+
+      const sequelize = await getSequelizeInstance();
+      const tables = (await sequelize.getQueryInterface().showAllTables()) as Array<
+        string | { tableName?: string }
+      >;
+      const names = tables.map((table) => (typeof table === "string" ? table : (table.tableName ?? "")));
+      if (!names.includes("sass_organization_user") || !names.includes("sass_organization")) {
+        return null;
+      }
+
+      return { OrganizationUserModel, OrganizationModel };
+    } catch {
+      return null;
+    }
+  }
+
+  static async resolveOrganization(userUuid: string | undefined): Promise<Organization | null> {
+    if (!userUuid) {
+      return null;
+    }
+
+    try {
+      const models = await UserModel.loadOrganizationLinkModels();
+      if (!models) {
+        return null;
+      }
+
+      const link = await models.OrganizationUserModel.findOne({
+        where: { user_id: userUuid, deleted_at: null },
+      });
+      if (!link) {
+        return null;
+      }
+
+      const organization = await models.OrganizationModel.findOne({
+        where: { uuid: link.organization_id, deleted_at: null },
+      });
+      if (!organization) {
+        return null;
+      }
+
+      return models.OrganizationModel.toApi(organization.toJSON());
+    } catch {
+      return null;
+    }
+  }
+
+  static async isAdmin(actor: unknown): Promise<boolean> {
+    const actorUuid = (actor as Record<string, unknown> | null)?.uuid;
+    if (typeof actorUuid !== "string") {
+      return false;
+    }
+
+    try {
+      return (await UserModel.resolveRole(actorUuid))?.slug === ADMIN_ROLE_SLUG;
+    } catch {
+      return false;
+    }
+  }
+
+  static async requireOrganizationPermission(actor: unknown): Promise<void> {
+    const actorUuid = (actor as Record<string, unknown> | null)?.uuid;
+    if (typeof actorUuid !== "string") {
+      throw new ForbiddenException("Insufficient permissions.");
+    }
+
+    const permissions = await UserModel.resolvePermissions(actorUuid);
+    if (!permissions.includes(UPDATE_ORGANIZATION_PERMISSION)) {
+      throw new ForbiddenException("Insufficient permissions.");
+    }
+  }
+
+  static async assignOrganization(userUuid: string, organizationId: string | null | undefined): Promise<void> {
+    if (organizationId === undefined) {
+      return;
+    }
+
+    const models = await UserModel.loadOrganizationLinkModels();
+    if (!models) {
+      return;
+    }
+
+    if (!organizationId) {
+      await models.OrganizationUserModel.destroy({ where: { user_id: userUuid } });
+      return;
+    }
+
+    const organization = await models.OrganizationModel.findOne({
+      where: { uuid: organizationId, deleted_at: null },
+    });
+    if (!organization) {
+      throw new NotFoundException("Organization not found.");
+    }
+
+    const link = await models.OrganizationUserModel.findOne({ where: { user_id: userUuid } });
+    if (link) {
+      await link.update({ organization_id: organizationId, updated_at: new Date() });
+    } else {
+      await models.OrganizationUserModel.create({ user_id: userUuid, organization_id: organizationId });
+    }
   }
 
   static async resolveRole(userUuid: string | undefined): Promise<Role | null> {

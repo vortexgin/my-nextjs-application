@@ -4,6 +4,7 @@ import { connectDatabase } from "@/database/sequelize";
 import { AuthComponent } from "@/components/AuthComponent";
 import { AccessDenied } from "@/components/AccessDenied";
 import { UserForm } from "@/app/base/components/user/UserForm";
+import { ADMIN_ROLE_SLUG } from "@/libraries/Permissions";
 import { requireSession } from "@/libraries/Auth";
 import { UserGetUseCase } from "@/app/base/useCases/user/UserGetUseCase";
 
@@ -46,12 +47,15 @@ export default async function UserEditPage({
         <UserForm
           mode="edit"
           uuid={user.uuid}
+          session={{ user: session.user, permissions: session.permissions }}
+          adminRoleSlug={ADMIN_ROLE_SLUG}
           initial={{
             name: user.name,
             email: user.email,
             phone_number: user.phone_number,
             status: user.status,
             role_id: user.role?.uuid ?? "",
+            organization_id: user.organization?.uuid ?? "",
           }}
         />
       </main>

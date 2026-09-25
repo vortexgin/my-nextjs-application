@@ -4,9 +4,11 @@ import { Op } from "sequelize";
 import UserModelFactory, { UserModel, type UpdateUserInput, type User } from "@/app/base/models/UserModel";
 import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import RoleModelFactory, { RoleModel } from "@/app/base/models/RoleModel";
+import { ADMIN_ROLE_SLUG } from "@/libraries/Permissions";
 import UserRoleModelFactory, { UserRoleModel } from "@/app/base/models/UserRoleModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 import DuplicateEntityException from "@/exceptions/DuplicateEntityException";
+import ForbiddenException from "@/exceptions/ForbiddenException";
 import NotFoundException from "@/exceptions/NotFoundException";
 
 const updateUserSchema = Joi.object({
@@ -16,6 +18,7 @@ const updateUserSchema = Joi.object({
   password: Joi.string().min(6).optional(),
   status: Joi.string().valid("active", "inactive", "deleted").optional(),
   role_id: Joi.string().uuid({ version: "uuidv4" }).allow(null).optional(),
+  organization_id: Joi.string().uuid({ version: "uuidv4" }).allow(null).optional(),
 }).min(1);
 
 export class UserUpdateUseCase extends BaseUseCase<string, User, { uuid: string; input: UpdateUserInput; actor: ActivityActor }> {
@@ -33,11 +36,15 @@ export class UserUpdateUseCase extends BaseUseCase<string, User, { uuid: string;
     }
     this.beforeData = await UserModel.toApi(this.userData?.toJSON());
 
+    if (Object.prototype.hasOwnProperty.call(validatedInput, "organization_id")) {
+      await UserModel.requireOrganizationPermission(actor);
+    }
+
     return { uuid, input: validatedInput, actor: actor ?? null };
   }
 
   protected async execute(context: { uuid: string; input: UpdateUserInput; actor: ActivityActor }): Promise<User> {
-    const { uuid, input } = context;
+    const { uuid, input, actor } = context;
     await UserModelFactory();
     const nextData: Record<string, unknown> = {
       updated_at: new Date(),
@@ -74,7 +81,8 @@ export class UserUpdateUseCase extends BaseUseCase<string, User, { uuid: string;
     }
 
     await this.userData?.update(nextData);
-    await this.syncRole(uuid, input);
+    await this.syncRole(uuid, input, actor);
+    await UserModel.assignOrganization(uuid, input.organization_id);
 
     return await UserModel.toApi(this.userData?.toJSON());
   }
@@ -94,7 +102,7 @@ export class UserUpdateUseCase extends BaseUseCase<string, User, { uuid: string;
     return super.postExec(result, context);
   }
 
-  private async syncRole(uuid: string, input: UpdateUserInput): Promise<void> {
+  private async syncRole(uuid: string, input: UpdateUserInput, actor: ActivityActor): Promise<void> {
     if (!Object.prototype.hasOwnProperty.call(input, "role_id")) {
       return;
     }
@@ -110,6 +118,9 @@ export class UserUpdateUseCase extends BaseUseCase<string, User, { uuid: string;
     const role = await RoleModel.findOne({ where: { uuid: input.role_id, deleted_at: null } });
     if (!role) {
       throw new NotFoundException("Role not found.");
+    }
+    if (role.slug === ADMIN_ROLE_SLUG && !(await UserModel.isAdmin(actor))) {
+      throw new ForbiddenException("Insufficient permissions.");
     }
 
     const assignment = await UserRoleModel.findOne({ where: { user_id: uuid } });

@@ -664,6 +664,28 @@ INSERT INTO
     )
 VALUES
     (
+        'e3a954fd-48e0-4193-91da-f9e132d61a2c',
+        'base:user:view:update-organization',
+        'Access for update organization user',
+        'active',
+        '2026-09-23 11:42:37.284771+07',
+        '2026-09-24 08:33:41.628+07',
+        NULL
+    )
+ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
         '5486735d-a6dd-4fdd-9334-d4da79a519c6',
         'sass:organization:list:list',
         'Access for list organization',
@@ -1205,13 +1227,15 @@ FROM
     public.base_roles r
     CROSS JOIN public.base_actions a
 WHERE
-    r.slug = 'admin-organization'
+    r.slug = 'admin'
     AND a.action IN (
         'base:user:list:list',
         'base:user:create:create',
         'base:user:view:detail',
         'base:user:view:update',
         'base:user:view:delete',
+        'base:user:view:update-role',
+        'base:user:view:update-organization',
         'base:action:list:list',
         'base:action:create:create',
         'base:action:view:detail',
@@ -1228,23 +1252,19 @@ WHERE
         'base:menu:settings:role',
         'base:menu:settings:user',
         'base:menu:settings:menus',
+        'base:menu:sass:sass',
+        'base:menu:sass:organization',
         'base:menus:list:list',
         'base:menus:create:create',
         'base:menus:view:detail',
         'base:menus:view:update',
         'base:menus:view:delete',
         'base:activity-log:list:list',
-        'base:user:view:update-role',
         'sass:organization:list:list',
         'sass:organization:create:create',
         'sass:organization:view:detail',
         'sass:organization:view:update',
-        'sass:organization:view:delete',
-        'sass:organization-user:list:list',
-        'sass:organization-user:create:create',
-        'sass:organization-user:view:detail',
-        'sass:organization-user:view:update',
-        'sass:organization-user:view:delete'
+        'sass:organization:view:delete'
     )
 ON CONFLICT DO NOTHING;
 
@@ -1265,16 +1285,15 @@ FROM
 WHERE
     r.slug = 'admin-organization'
     AND a.action IN (
-        'sass:organization:list:list',
-        'sass:organization:create:create',
-        'sass:organization:view:detail',
-        'sass:organization:view:update',
-        'sass:organization:view:delete',
-        'sass:organization-user:list:list',
-        'sass:organization-user:create:create',
-        'sass:organization-user:view:detail',
-        'sass:organization-user:view:update',
-        'sass:organization-user:view:delete'
+        'base:menu:settings:settings',
+        'base:menu:settings:user',
+        'base:role:list:list',
+        'base:user:list:list',
+        'base:user:create:create',
+        'base:user:view:detail',
+        'base:user:view:update',
+        'base:user:view:delete',
+        'base:user:view:update-role'
     )
 ON CONFLICT DO NOTHING;
 
@@ -1357,6 +1376,62 @@ VALUES
         '6542b60b-e678-4bde-be5e-9ddafcc5fe82',
         '2026-09-23 11:43:02.326272+07',
         '2026-09-23 11:43:02.326272+07'
+    )
+ON CONFLICT DO NOTHING;
+
+--
+-- Data for Name: sass_organization; Type: TABLE DATA; Schema: public; Owner: moladin
+--
+INSERT INTO
+    public.sass_organization (
+        uuid,
+        name,
+        address,
+        email,
+        phone,
+        npwp,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        '46896864-fecd-4a68-a19c-a715530100a9',
+        'VortexGin Sample',
+        'Jl. Merdeka No. 1, Jakarta',
+        'org@vortexgin.com',
+        '+10000000002',
+        NULL,
+        'active',
+        NOW(),
+        NOW(),
+        NULL
+    )
+ON CONFLICT DO NOTHING;
+
+--
+-- Data for Name: sass_organization_user; Type: TABLE DATA; Schema: public; Owner: moladin
+--
+INSERT INTO
+    public.sass_organization_user (
+        uuid,
+        organization_id,
+        user_id,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        '029a0fb4-e00c-4a0f-8299-cf84f63f71dc',
+        '46896864-fecd-4a68-a19c-a715530100a9',
+        '01694e54-498d-486f-a078-e860c5b3434e',
+        'active',
+        NOW(),
+        NOW(),
+        NULL
     )
 ON CONFLICT DO NOTHING;
 

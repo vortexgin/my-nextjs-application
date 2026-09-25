@@ -1,6 +1,7 @@
 import Joi from "joi";
 import { Op } from "sequelize";
-import UserModelFactory, { type User } from "@/app/base/models/UserModel";
+import UserModelFactory, { UserModel, type User } from "@/app/base/models/UserModel";
+import { type ActivityActor } from "@/app/base/models/ActivityLogModel";
 import { escapeLike } from "@/libraries/String";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 
@@ -28,6 +29,7 @@ export type ListUsersQuery = {
   sortDirection: "ASC" | "DESC";
   offset: number;
   limit: number;
+  actor: ActivityActor;
 };
 
 const SORTABLE_COLUMNS: Record<string, string> = {
@@ -58,7 +60,7 @@ const listUsersSchema = Joi.object({
 });
 
 export class UserListUseCase extends BaseUseCase<ListUsersInput | void, User[], ListUsersQuery> {
-  protected async preExec(input?: ListUsersInput | void): Promise<ListUsersQuery> {
+  protected async preExec(input?: ListUsersInput | void, actor?: ActivityActor): Promise<ListUsersQuery> {
     const validated = await this.validate<{
       filter?: ListUsersFilter;
       sortProperty: string;
@@ -77,7 +79,41 @@ export class UserListUseCase extends BaseUseCase<ListUsersInput | void, User[], 
       sortDirection: validated.sortDirection.toUpperCase() as "ASC" | "DESC",
       offset: validated.offset,
       limit: validated.limit,
+      actor: actor ?? null,
     };
+  }
+
+  /**
+   * Restricts listing to the actor's organization peers when the
+   * organization module is present and the actor is linked.
+   * Unlinked actors (and missing module) keep full visibility.
+   */
+  private async applyOrganizationScope(
+    conditions: Record<string, unknown>[],
+    actor: ActivityActor,
+  ): Promise<void> {
+    const actorUuid = (actor as Record<string, unknown> | null)?.uuid;
+    if (typeof actorUuid !== "string") {
+      return;
+    }
+
+    const models = await UserModel.loadOrganizationLinkModels();
+    if (!models) {
+      return;
+    }
+
+    const link = await models.OrganizationUserModel.findOne({
+      where: { user_id: actorUuid, deleted_at: null },
+    });
+    if (!link) {
+      return;
+    }
+
+    const peers = await models.OrganizationUserModel.findAll({
+      where: { organization_id: link.organization_id, deleted_at: null },
+      attributes: ["user_id"],
+    });
+    conditions.push({ uuid: { [Op.in]: peers.map((peer: { user_id: string }) => peer.user_id) } });
   }
 
   protected async execute(context: ListUsersQuery): Promise<User[]> {
@@ -106,6 +142,8 @@ export class UserListUseCase extends BaseUseCase<ListUsersInput | void, User[], 
         ],
       });
     }
+
+    await this.applyOrganizationScope(conditions, context.actor);
 
     const users = await UserModel.findAll({
       where: { [Op.and]: conditions },
