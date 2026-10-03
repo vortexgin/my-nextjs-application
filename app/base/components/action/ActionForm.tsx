@@ -19,7 +19,7 @@ export function ActionForm({
 }: {
   mode: "create" | "edit";
   uuid?: string;
-  initial?: Pick<Action, "action" | "description" | "status">;
+  initial?: Pick<Action, "action" | "description" | "status" | "is_transactions">;
 }) {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -36,6 +36,7 @@ export function ActionForm({
         action: String(formData.get("action") ?? ""),
         description: String(formData.get("description") ?? "") || null,
         status: String(formData.get("status") ?? "active"),
+        is_transactions: formData.get("is_transactions") === "on",
       };
 
       const envelope =
@@ -102,6 +103,16 @@ export function ActionForm({
               <option value="active">active</option>
               <option value="inactive">inactive</option>
             </select>
+          </label>
+
+          <label className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              name="is_transactions"
+              defaultChecked={initial?.is_transactions ?? false}
+              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm font-medium text-slate-700">Transaction action</span>
           </label>
 
           {error ? (

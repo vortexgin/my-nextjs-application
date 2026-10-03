@@ -31,6 +31,7 @@ const SORTABLE_COLUMNS: Record<string, string> = {
   action: "action",
   description: "description",
   status: "status",
+  is_transactions: "is_transactions",
   created_at: "created_at",
   updated_at: "updated_at",
 };

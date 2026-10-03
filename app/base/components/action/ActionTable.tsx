@@ -12,6 +12,7 @@ const API_PATH = "/base/api/v1/actions";
 const COLUMNS: TableColumn[] = [
   { key: "action", label: "Action", field: "action" },
   { key: "description", label: "Description", field: "description" },
+  { key: "is_transactions", label: "Transactions", field: "is_transactions" },
   { key: "status", label: "Status", field: "status" },
   { key: "created_at", label: "Created", field: "created_at" },
 ];
@@ -44,6 +45,9 @@ function renderActionCell(column: TableColumn, row: TableRow, value: unknown) {
   }
   if (column.key === "description") {
     return <span className="block max-w-56 truncate">{String(value ?? "—")}</span>;
+  }
+  if (column.key === "is_transactions") {
+    return <span>{value ? "Yes" : "No"}</span>;
   }
   if (column.key === "status") {
     return <StatusBadge status={String(value)} />;

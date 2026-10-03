@@ -9,6 +9,7 @@ const createActionSchema = Joi.object({
   action: Joi.string().trim().lowercase().pattern(/^[a-z0-9._:-]+$/).min(2).max(120).required(),
   description: Joi.string().trim().allow("", null).max(255).optional(),
   status: Joi.string().valid("active", "inactive", "deleted").optional(),
+  is_transactions: Joi.boolean().optional(),
 });
 
 export class ActionCreateUseCase extends BaseUseCase<CreateActionInput, Action, { input: CreateActionInput; actor: ActivityActor }> {
@@ -37,6 +38,7 @@ export class ActionCreateUseCase extends BaseUseCase<CreateActionInput, Action, 
       action: input.action?.trim().toLowerCase(),
       description: input.description?.trim() || null,
       status: input.status ?? "active",
+      is_transactions: input.is_transactions ?? false,
       deleted_at: null,
     });
 

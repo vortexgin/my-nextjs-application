@@ -20,8 +20,10 @@ const createUserSchema = Joi.object({
   organization_id: Joi.string().uuid({ version: "uuidv4" }).optional(),
 });
 
-export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, { input: CreateUserInput; actor: ActivityActor }> {
-  protected async preExec(input: CreateUserInput, actor?: ActivityActor): Promise<{ input: CreateUserInput; actor: ActivityActor }> {
+export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, { input: CreateUserInput; actor: ActivityActor; isTransaction: boolean }> {
+  protected async preExec(input: CreateUserInput, actor?: ActivityActor): Promise<{ input: CreateUserInput; actor: ActivityActor; isTransaction: boolean }> {
+    const isTransaction = await UserModel.checkActiveInvoiceAndPackage(actor, "base:user:create:create");
+
     const validated = await this.validate<CreateUserInput>(createUserSchema, input);
     if (validated.organization_id) {
       await UserModel.requireOrganizationPermission(actor);
@@ -33,7 +35,7 @@ export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, { inpu
         throw new ForbiddenException("Insufficient permissions.");
       }
     }
-    return { input: validated, actor: actor ?? null };
+    return { input: validated, actor: actor ?? null, isTransaction };
   }
 
   protected async validate<TValidated = CreateUserInput>(schema: Schema, input: CreateUserInput): Promise<TValidated> {
@@ -68,7 +70,7 @@ export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, { inpu
     return validatedInput;
   }
 
-  protected async execute(context: { input: CreateUserInput; actor: ActivityActor }): Promise<User> {
+  protected async execute(context: { input: CreateUserInput; actor: ActivityActor; isTransaction: boolean }): Promise<User> {
     const { input } = context;
     await UserModelFactory();
     const user = await UserModel.create({
@@ -93,7 +95,7 @@ export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, { inpu
 
   protected async postExec(
     result: User,
-    context?: { input: CreateUserInput; actor: ActivityActor },
+    context?: { input: CreateUserInput; actor: ActivityActor; isTransaction: boolean },
   ): Promise<User> {
     void recordActivityLog({
       actor: context?.actor ?? null,
@@ -102,6 +104,7 @@ export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, { inpu
       entity_uuid: result.uuid,
       origin: null,
       updated: result,
+      is_transaction: context?.isTransaction ?? false,
     });
     return super.postExec(result, context);
   }

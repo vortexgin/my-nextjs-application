@@ -46,7 +46,7 @@ export default async function ActionEditPage({
         <ActionForm
           mode="edit"
           uuid={action.uuid}
-          initial={{ action: action.action, description: action.description, status: action.status }}
+          initial={{ action: action.action, description: action.description, status: action.status, is_transactions: action.is_transactions }}
         />
       </main>
     </AuthComponent>

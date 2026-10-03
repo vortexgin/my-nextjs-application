@@ -8,6 +8,7 @@ export type Action = {
   action: string;
   description: string | null;
   status: ActionStatus;
+  is_transactions: boolean;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -17,6 +18,7 @@ export type CreateActionInput = {
   action: string;
   description?: string | null;
   status?: ActionStatus;
+  is_transactions?: boolean;
 };
 
 export type UpdateActionInput = Partial<CreateActionInput>;
@@ -34,6 +36,7 @@ export class ActionModel extends Model<ActionModelAttributes, ActionModelCreatio
   declare action: string;
   declare description: string | null;
   declare status: "active" | "inactive" | "deleted";
+  declare is_transactions: boolean;
   declare created_at: Date;
   declare updated_at: Date;
   declare deleted_at: Date | null;
@@ -44,6 +47,7 @@ export class ActionModel extends Model<ActionModelAttributes, ActionModelCreatio
       action: action.action,
       description: action.description ?? null,
       status: action.status,
+      is_transactions: Boolean(action.is_transactions),
       created_at: action.created_at ? new Date(action.created_at).toISOString() : new Date().toISOString(),
       updated_at: action.updated_at ? new Date(action.updated_at).toISOString() : new Date().toISOString(),
       deleted_at: action.deleted_at ? new Date(action.deleted_at).toISOString() : null,
@@ -92,6 +96,11 @@ async function initActionModel(): Promise<typeof ActionModel> {
           type: DataTypes.ENUM("active", "inactive", "deleted"),
           allowNull: false,
           defaultValue: "active",
+        },
+        is_transactions: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+          defaultValue: false,
         },
         created_at: {
           type: DataTypes.DATE,

@@ -67,6 +67,7 @@ export default async function ActionDetailPage({
               <Row label="UUID" value={action.uuid} />
               <Row label="Action" value={action.action} />
               <Row label="Description" value={action.description ?? "—"} />
+              <Row label="Transactions" value={action.is_transactions ? "Yes" : "No"} />
               <Row label="Status" value={action.status} />
               <Row label="Created" value={action.created_at} />
               <Row label="Updated" value={action.updated_at} />

@@ -1,4 +1,4 @@
-import { DataTypes, Model } from "sequelize";
+import { DataTypes, Model, Op } from "sequelize";
 import { getSequelizeInstance } from "@/database/sequelize";
 import RoleModelFactory, { RoleModel, type Role } from "@/app/base/models/RoleModel";
 import { ADMIN_ROLE_SLUG } from "@/libraries/Permissions";
@@ -134,6 +134,94 @@ export class UserModel extends Model<UserModelAttributes, UserModelCreationAttri
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Billing gate for transaction-gated endpoints. Resolves the actor's
+   * organization, its running invoice, and the live package, then
+   * enforces action inclusion plus type-specific limits. Throws
+   * ForbiddenException on any failure. Returns true when allowed.
+   * Open (true) when the sass billing module is absent.
+   */
+  static async checkActiveInvoiceAndPackage(activeUser: unknown, actionString: string): Promise<boolean> {
+    const userUuid =
+      typeof activeUser === "string"
+        ? activeUser
+        : (activeUser as Record<string, unknown> | null)?.uuid;
+    if (typeof userUuid !== "string") {
+      throw new ForbiddenException("Billing check requires a user.");
+    }
+
+    let invoiceModel: any;
+    let packageModel: any;
+    try {
+      const invoiceModule = await import("@/app/sass/models/InvoiceModel");
+      const packageModule = await import("@/app/sass/models/PackageModel");
+      invoiceModel = await invoiceModule.getInvoiceModel();
+      packageModel = await packageModule.getPackageModel();
+    } catch {
+      return false;
+    }
+
+    const linkModels = await UserModel.loadOrganizationLinkModels();
+    if (!linkModels) {
+      return false;
+    }
+
+    const link = await linkModels.OrganizationUserModel.findOne({
+      where: { user_id: userUuid, deleted_at: null },
+    });
+    if (!link) {
+      return false;
+    }
+
+    const invoice = await invoiceModel.findOne({
+      where: {
+        status: "running",
+        deleted_at: null,
+        organization: { id: link.organization_id },
+      },
+      order: [["created_at", "DESC"]],
+    });
+    if (!invoice) {
+      throw new ForbiddenException("No running invoice.");
+    }
+
+    const pkg = await packageModel.findOne({
+      where: { uuid: invoice.package?.id, deleted_at: null },
+    });
+    if (!pkg) {
+      throw new ForbiddenException("Package not found.");
+    }
+
+    const entries = Array.isArray(pkg.actions) ? pkg.actions : [];
+    const actionIds = entries
+      .map((entry: { action_id?: unknown }) => entry.action_id)
+      .filter((id: unknown): id is string => typeof id === "string");
+    let codes: string[] = [];
+    if (actionIds.length > 0) {
+      await ActionModelFactory();
+      const actions = await ActionModel.findAll({ where: { uuid: { [Op.in]: actionIds }, deleted_at: null } });
+      codes = actions.map((action) => action.action);
+    }
+    if (!codes.includes(actionString)) {
+      throw new ForbiddenException("Action is not included in the package.");
+    }
+
+    if (pkg.type === "subscription") {
+      if (!invoice.end_date || new Date(invoice.end_date).getTime() <= Date.now()) {
+        throw new ForbiddenException("Subscription has expired.");
+      }
+    }
+
+    if (pkg.type === "quota") {
+      const usage = typeof invoice.credit_usage === "number" ? invoice.credit_usage : 0;
+      if (typeof invoice.credit_limit !== "number" || usage >= invoice.credit_limit) {
+        throw new ForbiddenException("Credit quota exhausted.");
+      }
+    }
+
+    return true;
   }
 
   static async isAdmin(actor: unknown): Promise<boolean> {

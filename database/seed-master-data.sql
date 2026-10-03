@@ -55,8 +55,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -77,8 +76,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -99,8 +97,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -121,8 +118,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -143,8 +139,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -165,8 +160,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -187,8 +181,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -209,8 +202,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -231,8 +223,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -253,8 +244,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -275,8 +265,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -297,8 +286,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -319,8 +307,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -341,8 +328,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -363,8 +349,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -385,8 +370,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-23 11:42:37.284771+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -407,8 +391,7 @@ VALUES
         '2026-09-23 13:46:29.590575+07',
         '2026-09-23 13:46:29.590575+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -429,8 +412,7 @@ VALUES
         '2026-09-23 13:46:29.590575+07',
         '2026-09-23 13:46:29.590575+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -451,8 +433,7 @@ VALUES
         '2026-09-23 13:46:29.590575+07',
         '2026-09-23 13:46:29.590575+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -473,8 +454,7 @@ VALUES
         '2026-09-23 13:46:29.590575+07',
         '2026-09-23 13:46:29.590575+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -495,8 +475,7 @@ VALUES
         '2026-09-23 13:52:11.125392+07',
         '2026-09-23 13:52:11.125392+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -517,8 +496,7 @@ VALUES
         '2026-09-23 13:52:11.125392+07',
         '2026-09-23 13:52:11.125392+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -539,8 +517,7 @@ VALUES
         '2026-09-23 13:52:11.125392+07',
         '2026-09-23 13:52:11.125392+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -561,8 +538,7 @@ VALUES
         '2026-09-23 13:52:11.125392+07',
         '2026-09-23 13:52:11.125392+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -583,8 +559,7 @@ VALUES
         '2026-09-23 13:52:11.125392+07',
         '2026-09-23 13:52:11.125392+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -605,8 +580,7 @@ VALUES
         '2026-09-23 13:52:11.125392+07',
         '2026-09-23 13:52:11.125392+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -627,8 +601,7 @@ VALUES
         '2026-09-24 08:30:57.751869+07',
         '2026-09-24 08:30:57.751869+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -649,8 +622,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-24 08:33:41.628+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -671,8 +643,7 @@ VALUES
         '2026-09-23 11:42:37.284771+07',
         '2026-09-24 08:33:41.628+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -690,11 +661,10 @@ VALUES
         'sass:organization:list:list',
         'Access for list organization',
         'active',
-        NOW(),
-        NOW(),
+        NOW (),
+        NOW (),
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -712,11 +682,10 @@ VALUES
         'sass:organization:create:create',
         'Access for create organization',
         'active',
-        NOW(),
-        NOW(),
+        NOW (),
+        NOW (),
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -734,11 +703,10 @@ VALUES
         'sass:organization:view:detail',
         'Access for view detail organization',
         'active',
-        NOW(),
-        NOW(),
+        NOW (),
+        NOW (),
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -756,11 +724,10 @@ VALUES
         'sass:organization:view:update',
         'Access for update detail organization',
         'active',
-        NOW(),
-        NOW(),
+        NOW (),
+        NOW (),
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -778,11 +745,10 @@ VALUES
         'sass:organization:view:delete',
         'Access for delete organization',
         'active',
-        NOW(),
-        NOW(),
+        NOW (),
+        NOW (),
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -800,11 +766,10 @@ VALUES
         'sass:organization-user:list:list',
         'Access for list organization user',
         'active',
-        NOW(),
-        NOW(),
+        NOW (),
+        NOW (),
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -822,11 +787,10 @@ VALUES
         'sass:organization-user:create:create',
         'Access for create organization user',
         'active',
-        NOW(),
-        NOW(),
+        NOW (),
+        NOW (),
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -844,11 +808,10 @@ VALUES
         'sass:organization-user:view:detail',
         'Access for view detail organization user',
         'active',
-        NOW(),
-        NOW(),
+        NOW (),
+        NOW (),
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -866,11 +829,10 @@ VALUES
         'sass:organization-user:view:update',
         'Access for update detail organization user',
         'active',
-        NOW(),
-        NOW(),
+        NOW (),
+        NOW (),
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -888,11 +850,10 @@ VALUES
         'sass:organization-user:view:delete',
         'Access for delete organization user',
         'active',
-        NOW(),
-        NOW(),
+        NOW (),
+        NOW (),
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -910,11 +871,10 @@ VALUES
         'base:menu:sass:sass',
         'Access for sass module',
         'active',
-        NOW(),
-        NOW(),
+        NOW (),
+        NOW (),
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_actions (
@@ -932,11 +892,199 @@ VALUES
         'base:menu:sass:organization',
         'Access for sass organization module',
         'active',
-        NOW(),
-        NOW(),
+        NOW (),
+        NOW (),
         NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
     )
-ON CONFLICT DO NOTHING;
+VALUES
+    (
+        '866d7069-8c66-40e6-8679-066d25cc817e',
+        'base:menu:sass:package',
+        'Access for sass package module',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        '842f4488-e999-45ce-83f5-428417bf3850',
+        'sass:package:list:list',
+        'Access for list package',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        'c448ac6f-1224-402f-8f8a-418e533f5015',
+        'sass:package:create:create',
+        'Access for create package',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        '58476032-4676-4c70-91b3-257c217cce01',
+        'sass:package:view:detail',
+        'Access for view detail package',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        'cbc65e68-25b8-4a45-aad3-0069b47865a2',
+        'sass:package:view:update',
+        'Access for update detail package',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        'b9953eb4-de1e-464b-a4da-8a92322354b4',
+        'sass:package:view:delete',
+        'Access for delete package',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        '3149bb22-4160-49ad-b4c8-112fdddf24ca',
+        'base:menu:sass:invoice',
+        'Access for sass invoice module',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        'd32b1286-972f-44e2-9f8b-e01912adb2a2',
+        'sass:invoice:list:list',
+        'Access for list invoice',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        'ceaec207-f3f2-486b-886a-f71ebfab6e80',
+        'sass:invoice:view:detail',
+        'Access for view detail invoice',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
 
 --
 -- Data for Name: menus; Type: TABLE DATA; Schema: public; Owner: moladin
@@ -970,8 +1118,7 @@ VALUES
         '2026-09-23 13:46:29.728008+07',
         NULL,
         0
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_menus (
@@ -1002,8 +1149,7 @@ VALUES
         '2026-09-23 21:50:38.672+07',
         NULL,
         2
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_menus (
@@ -1034,8 +1180,7 @@ VALUES
         '2026-09-23 21:51:07.645+07',
         NULL,
         3
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_menus (
@@ -1066,8 +1211,7 @@ VALUES
         '2026-09-23 21:51:16.414+07',
         NULL,
         4
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_menus (
@@ -1098,8 +1242,7 @@ VALUES
         '2026-09-23 21:51:26.394+07',
         NULL,
         1
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_menus (
@@ -1130,8 +1273,7 @@ VALUES
         '2026-09-23 13:46:29.728008+07',
         NULL,
         0
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_menus (
@@ -1162,8 +1304,7 @@ VALUES
         '2026-09-23 13:46:29.728008+07',
         NULL,
         0
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 --
 -- Data for Name: roles; Type: TABLE DATA; Schema: public; Owner: moladin
@@ -1187,8 +1328,7 @@ VALUES
         '2026-09-23 11:42:37.205955+07',
         '2026-09-23 11:42:37.205955+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_roles (
@@ -1209,8 +1349,7 @@ VALUES
         '2026-09-24 08:18:41.524+07',
         '2026-09-24 08:18:41.524+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 --
 -- Data for Name: permissions; Type: TABLE DATA; Schema: public; Owner: moladin
@@ -1218,11 +1357,11 @@ ON CONFLICT DO NOTHING;
 INSERT INTO
     public.base_permissions (uuid, role_id, action_id, created_at, updated_at)
 SELECT
-    gen_random_uuid(),
+    gen_random_uuid (),
     r.uuid,
     a.uuid,
-    NOW(),
-    NOW()
+    NOW (),
+    NOW ()
 FROM
     public.base_roles r
     CROSS JOIN public.base_actions a
@@ -1254,6 +1393,8 @@ WHERE
         'base:menu:settings:menus',
         'base:menu:sass:sass',
         'base:menu:sass:organization',
+        'base:menu:sass:package',
+        'base:menu:sass:invoice',
         'base:menus:list:list',
         'base:menus:create:create',
         'base:menus:view:detail',
@@ -1264,9 +1405,15 @@ WHERE
         'sass:organization:create:create',
         'sass:organization:view:detail',
         'sass:organization:view:update',
-        'sass:organization:view:delete'
-    )
-ON CONFLICT DO NOTHING;
+        'sass:organization:view:delete',
+        'sass:package:list:list',
+        'sass:package:create:create',
+        'sass:package:view:detail',
+        'sass:package:view:update',
+        'sass:package:view:delete',
+        'sass:invoice:list:list',
+        'sass:invoice:view:detail'
+    ) ON CONFLICT DO NOTHING;
 
 --
 -- Grants for role: admin-organization (sass organization codes)
@@ -1274,11 +1421,11 @@ ON CONFLICT DO NOTHING;
 INSERT INTO
     public.base_permissions (uuid, role_id, action_id, created_at, updated_at)
 SELECT
-    gen_random_uuid(),
+    gen_random_uuid (),
     r.uuid,
     a.uuid,
-    NOW(),
-    NOW()
+    NOW (),
+    NOW ()
 FROM
     public.base_roles r
     CROSS JOIN public.base_actions a
@@ -1287,15 +1434,38 @@ WHERE
     AND a.action IN (
         'base:menu:settings:settings',
         'base:menu:settings:user',
+        'base:menu:settings:invoice',
         'base:role:list:list',
         'base:user:list:list',
         'base:user:create:create',
         'base:user:view:detail',
         'base:user:view:update',
         'base:user:view:delete',
-        'base:user:view:update-role'
-    )
-ON CONFLICT DO NOTHING;
+        'base:user:view:update-role',
+        'sass:invoice:list:list',
+        'sass:invoice:view:detail'
+    ) ON CONFLICT DO NOTHING;
+
+--
+-- Grants for role: admin-organization (sass invoice codes)
+--
+INSERT INTO
+    public.base_permissions (uuid, role_id, action_id, created_at, updated_at)
+SELECT
+    gen_random_uuid (),
+    r.uuid,
+    a.uuid,
+    NOW (),
+    NOW ()
+FROM
+    public.base_roles r
+    CROSS JOIN public.base_actions a
+WHERE
+    r.slug = 'admin-organization'
+    AND a.action IN (
+        'sass:invoice:list:list',
+        'sass:invoice:view:detail'
+    ) ON CONFLICT DO NOTHING;
 
 --
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: moladin
@@ -1323,8 +1493,7 @@ VALUES
         '2026-09-23 11:43:02.324537+07',
         '2026-09-23 20:19:14.829459+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_users (
@@ -1349,8 +1518,7 @@ VALUES
         '2026-09-23 11:43:02.324537+07',
         '2026-09-23 20:19:14.829459+07',
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 --
 -- Data for Name: user_roles; Type: TABLE DATA; Schema: public; Owner: moladin
@@ -1364,8 +1532,7 @@ VALUES
         '44beb171-a0e7-4a90-a4b2-d30f5581bda4',
         '2026-09-23 11:43:02.326272+07',
         '2026-09-23 11:43:02.326272+07'
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 INSERT INTO
     public.base_user_roles (uuid, user_id, role_id, created_at, updated_at)
@@ -1376,8 +1543,7 @@ VALUES
         '6542b60b-e678-4bde-be5e-9ddafcc5fe82',
         '2026-09-23 11:43:02.326272+07',
         '2026-09-23 11:43:02.326272+07'
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 --
 -- Data for Name: sass_organization; Type: TABLE DATA; Schema: public; Owner: moladin
@@ -1404,11 +1570,10 @@ VALUES
         '+10000000002',
         NULL,
         'active',
-        NOW(),
-        NOW(),
+        NOW (),
+        NOW (),
         NULL
-    )
-ON CONFLICT DO NOTHING;
+    ) ON CONFLICT DO NOTHING;
 
 --
 -- Data for Name: sass_organization_user; Type: TABLE DATA; Schema: public; Owner: moladin
@@ -1429,11 +1594,102 @@ VALUES
         '46896864-fecd-4a68-a19c-a715530100a9',
         '01694e54-498d-486f-a078-e860c5b3434e',
         'active',
-        NOW(),
-        NOW(),
+        NOW (),
+        NOW (),
         NULL
+    ) ON CONFLICT DO NOTHING;
+
+--
+-- Data for Name: sass_package; Type: TABLE DATA; Schema: public; Owner: moladin
+--
+INSERT INTO
+    public.sass_package (
+        uuid,
+        name,
+        description,
+        type,
+        duration_days,
+        duration_description,
+        actions,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
     )
-ON CONFLICT DO NOTHING;
+VALUES
+    (
+        'c9df0d8d-7d56-4cb5-b708-0963ec18aa6d',
+        'Basic Subscription',
+        'Monthly subscription sample package',
+        'subscription',
+        30,
+        '30 days access',
+        '[{"action_id": "c366e903-ae3e-4005-b03b-9a08412fabc3"}]',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.sass_package (
+        uuid,
+        name,
+        description,
+        type,
+        duration_days,
+        duration_description,
+        actions,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        'a33b527e-dbcb-4d78-9b75-077a0c4497c5',
+        'Pay Per Use',
+        'Transaction sample package',
+        'transaction',
+        NULL,
+        'Pay per transaction, no expiry',
+        '[{"action_id": "c366e903-ae3e-4005-b03b-9a08412fabc3", "credit": 1000}]',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.sass_package (
+        uuid,
+        name,
+        description,
+        type,
+        duration_days,
+        duration_description,
+        credit_quota,
+        actions,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        '8d0072e1-1463-4033-9533-06ed31fb7b31',
+        'Quota Sample',
+        'Quota sample package',
+        'quota',
+        NULL,
+        NULL,
+        1000,
+        '[{"action_id": "c366e903-ae3e-4005-b03b-9a08412fabc3", "credit": 1000}]',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
 
 --
 -- PostgreSQL database dump complete

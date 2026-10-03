@@ -41,6 +41,7 @@ export type ActivityLog = {
   entity_uuid: string | null;
   origin: Record<string, unknown> | null;
   updated: Record<string, unknown> | null;
+  is_transaction: boolean;
   created_at: string;
 };
 
@@ -51,6 +52,7 @@ export type CreateActivityLogInput = {
   entity_uuid?: string | null;
   origin?: Record<string, unknown> | null;
   updated?: Record<string, unknown> | null;
+  is_transaction?: boolean;
 };
 
 export type ActivityLogModelAttributes = {
@@ -61,6 +63,7 @@ export type ActivityLogModelAttributes = {
   entity_uuid: string | null;
   origin: Record<string, unknown> | null;
   updated: Record<string, unknown> | null;
+  is_transaction: boolean;
   created_at: Date;
 };
 
@@ -74,6 +77,7 @@ export class ActivityLogModel extends Model<ActivityLogModelAttributes, Activity
   declare entity_uuid: string | null;
   declare origin: Record<string, unknown> | null;
   declare updated: Record<string, unknown> | null;
+  declare is_transaction: boolean;
   declare created_at: Date;
 
   static toApi(activityLog: any): ActivityLog {
@@ -85,6 +89,7 @@ export class ActivityLogModel extends Model<ActivityLogModelAttributes, Activity
       entity_uuid: activityLog.entity_uuid ?? null,
       origin: (activityLog.origin as Record<string, unknown> | undefined) ?? null,
       updated: (activityLog.updated as Record<string, unknown> | undefined) ?? null,
+      is_transaction: Boolean(activityLog.is_transaction),
       created_at: activityLog.created_at ? new Date(activityLog.created_at).toISOString() : new Date().toISOString(),
     };
   }
@@ -145,6 +150,11 @@ async function initActivityLogModel(): Promise<typeof ActivityLogModel> {
           allowNull: true,
           defaultValue: null,
         },
+        is_transaction: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+          defaultValue: false,
+        },
         created_at: {
           type: DataTypes.DATE,
           allowNull: false,
@@ -181,6 +191,7 @@ export async function recordActivityLog(input: CreateActivityLogInput): Promise<
       entity_uuid: input.entity_uuid ?? null,
       origin: input.origin ?? null,
       updated: input.updated ?? null,
+      is_transaction: input.is_transaction ?? false,
     });
   } catch (error) {
     console.error("Failed to record activity log.", error);

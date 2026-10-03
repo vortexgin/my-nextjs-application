@@ -10,6 +10,7 @@ const updateActionSchema = Joi.object({
   action: Joi.string().trim().lowercase().pattern(/^[a-z0-9._:-]+$/).min(2).max(120).optional(),
   description: Joi.string().trim().allow("", null).max(255).optional(),
   status: Joi.string().valid("active", "inactive", "deleted").optional(),
+  is_transactions: Joi.boolean().optional(),
 }).min(1);
 
 export class ActionUpdateUseCase extends BaseUseCase<string, Action, { uuid: string; input: UpdateActionInput; actor: ActivityActor }> {
@@ -48,6 +49,10 @@ export class ActionUpdateUseCase extends BaseUseCase<string, Action, { uuid: str
 
     if (typeof input.description === "string" || input.description === null) {
       nextData.description = typeof input.description === "string" ? input.description.trim() || null : null;
+    }
+
+    if (typeof input.is_transactions === "boolean") {
+      nextData.is_transactions = input.is_transactions;
     }
 
     if (input.status) {
