@@ -140,10 +140,21 @@ export class UserModel extends Model<UserModelAttributes, UserModelCreationAttri
    * Billing gate for transaction-gated endpoints. Resolves the actor's
    * organization, its running invoice, and the live package, then
    * enforces action inclusion plus type-specific limits. Throws
-   * ForbiddenException on any failure. Returns true when allowed.
-   * Open (true) when the sass billing module is absent.
+   * ForbiddenException on any failure. Returns transaction flag, the
+   * raw `credit` value of the matched package action entry, and the
+   * running invoice instance.
+   * Open ({ isTransaction: false, credit: null, invoice: null }) when
+   * the sass billing module is absent.
    */
-  static async checkActiveInvoiceAndPackage(activeUser: unknown, actionString: string): Promise<boolean> {
+  static async checkActiveInvoiceAndPackage(
+    activeUser: unknown,
+    actionString: string,
+  ): Promise<{ isTransaction: boolean; credit: number | null; invoice: any | null }> {
+    const open: { isTransaction: boolean; credit: number | null; invoice: any | null } = {
+      isTransaction: false,
+      credit: null,
+      invoice: null,
+    };
     const userUuid =
       typeof activeUser === "string"
         ? activeUser
@@ -160,19 +171,19 @@ export class UserModel extends Model<UserModelAttributes, UserModelCreationAttri
       invoiceModel = await invoiceModule.getInvoiceModel();
       packageModel = await packageModule.getPackageModel();
     } catch {
-      return false;
+      return open;
     }
 
     const linkModels = await UserModel.loadOrganizationLinkModels();
     if (!linkModels) {
-      return false;
+      return open;
     }
 
     const link = await linkModels.OrganizationUserModel.findOne({
       where: { user_id: userUuid, deleted_at: null },
     });
     if (!link) {
-      return false;
+      return open;
     }
 
     const invoice = await invoiceModel.findOne({
@@ -195,14 +206,26 @@ export class UserModel extends Model<UserModelAttributes, UserModelCreationAttri
     }
 
     const entries = Array.isArray(pkg.actions) ? pkg.actions : [];
+    const creditByActionId = new Map<string, number | null>();
     const actionIds = entries
-      .map((entry: { action_id?: unknown }) => entry.action_id)
+      .map((entry: { action_id?: unknown; credit?: unknown }) => {
+        if (typeof entry?.action_id === "string") {
+          creditByActionId.set(
+            entry.action_id,
+            typeof entry?.credit === "number" ? entry.credit : null,
+          );
+          return entry.action_id;
+        }
+        return null;
+      })
       .filter((id: unknown): id is string => typeof id === "string");
+    let matchedActionUuid: string | null = null;
     let codes: string[] = [];
     if (actionIds.length > 0) {
       await ActionModelFactory();
       const actions = await ActionModel.findAll({ where: { uuid: { [Op.in]: actionIds }, deleted_at: null } });
       codes = actions.map((action) => action.action);
+      matchedActionUuid = actions.find((action) => action.action === actionString)?.uuid ?? null;
     }
     if (!codes.includes(actionString)) {
       throw new ForbiddenException("Action is not included in the package.");
@@ -221,7 +244,11 @@ export class UserModel extends Model<UserModelAttributes, UserModelCreationAttri
       }
     }
 
-    return true;
+    return {
+      isTransaction: true,
+      credit: matchedActionUuid ? (creditByActionId.get(matchedActionUuid) ?? null) : null,
+      invoice,
+    };
   }
 
   static async isAdmin(actor: unknown): Promise<boolean> {

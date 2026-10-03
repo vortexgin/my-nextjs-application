@@ -128,6 +128,11 @@ export function ActivityTimeline({
               </div>
               <DataBlock title="Origin data" data={log.origin} />
               <DataBlock title="Updated data" data={log.updated} />
+              {typeof log.credit === "number" ? (
+                <p className="mt-2 text-xs text-slate-500">
+                  Credit: <span className="font-medium text-slate-700">{log.credit}</span>
+                </p>
+              ) : null}
             </li>
           ))}
         </ol>

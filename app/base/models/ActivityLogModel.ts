@@ -41,6 +41,7 @@ export type ActivityLog = {
   entity_uuid: string | null;
   origin: Record<string, unknown> | null;
   updated: Record<string, unknown> | null;
+  credit: number | null;
   is_transaction: boolean;
   created_at: string;
 };
@@ -52,6 +53,7 @@ export type CreateActivityLogInput = {
   entity_uuid?: string | null;
   origin?: Record<string, unknown> | null;
   updated?: Record<string, unknown> | null;
+  credit?: number | null;
   is_transaction?: boolean;
 };
 
@@ -63,6 +65,7 @@ export type ActivityLogModelAttributes = {
   entity_uuid: string | null;
   origin: Record<string, unknown> | null;
   updated: Record<string, unknown> | null;
+  credit: number | null;
   is_transaction: boolean;
   created_at: Date;
 };
@@ -77,6 +80,7 @@ export class ActivityLogModel extends Model<ActivityLogModelAttributes, Activity
   declare entity_uuid: string | null;
   declare origin: Record<string, unknown> | null;
   declare updated: Record<string, unknown> | null;
+  declare credit: number | null;
   declare is_transaction: boolean;
   declare created_at: Date;
 
@@ -89,6 +93,7 @@ export class ActivityLogModel extends Model<ActivityLogModelAttributes, Activity
       entity_uuid: activityLog.entity_uuid ?? null,
       origin: (activityLog.origin as Record<string, unknown> | undefined) ?? null,
       updated: (activityLog.updated as Record<string, unknown> | undefined) ?? null,
+      credit: typeof activityLog.credit === "number" ? activityLog.credit : null,
       is_transaction: Boolean(activityLog.is_transaction),
       created_at: activityLog.created_at ? new Date(activityLog.created_at).toISOString() : new Date().toISOString(),
     };
@@ -150,6 +155,11 @@ async function initActivityLogModel(): Promise<typeof ActivityLogModel> {
           allowNull: true,
           defaultValue: null,
         },
+        credit: {
+          type: DataTypes.JSONB,
+          allowNull: true,
+          defaultValue: null,
+        },
         is_transaction: {
           type: DataTypes.BOOLEAN,
           allowNull: false,
@@ -191,6 +201,7 @@ export async function recordActivityLog(input: CreateActivityLogInput): Promise<
       entity_uuid: input.entity_uuid ?? null,
       origin: input.origin ?? null,
       updated: input.updated ?? null,
+      credit: input.credit ?? null,
       is_transaction: input.is_transaction ?? false,
     });
   } catch (error) {

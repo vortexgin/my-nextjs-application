@@ -37,6 +37,11 @@ module.exports = {
         allowNull: true,
         defaultValue: null,
       },
+      credit: {
+        type: Sequelize.JSONB,
+        allowNull: true,
+        defaultValue: null,
+      },
       is_transaction: {
         type: Sequelize.BOOLEAN,
         allowNull: false,

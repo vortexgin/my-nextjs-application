@@ -1,11 +1,12 @@
 import { createHash, randomUUID } from "crypto";
 import Joi, { Schema } from "joi";
 import UserModelFactory, { UserModel, type CreateUserInput, type User } from "@/app/base/models/UserModel";
-import { recordActivityLog, type ActivityActor } from "@/app/base/models/ActivityLogModel";
+import type { ActivityActor } from "@/app/base/models/ActivityLogModel";
 import RoleModelFactory, { RoleModel } from "@/app/base/models/RoleModel";
 import { ADMIN_ROLE_SLUG } from "@/libraries/Permissions";
 import UserRoleModelFactory, { UserRoleModel } from "@/app/base/models/UserRoleModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
+import { checkTransaction, settleTransaction, type TransactionBilling } from "@/useCases/TransactionUseCase";
 import DuplicateEntityException from "@/exceptions/DuplicateEntityException";
 import ForbiddenException from "@/exceptions/ForbiddenException";
 import NotFoundException from "@/exceptions/NotFoundException";
@@ -20,9 +21,11 @@ const createUserSchema = Joi.object({
   organization_id: Joi.string().uuid({ version: "uuidv4" }).optional(),
 });
 
-export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, { input: CreateUserInput; actor: ActivityActor; isTransaction: boolean }> {
-  protected async preExec(input: CreateUserInput, actor?: ActivityActor): Promise<{ input: CreateUserInput; actor: ActivityActor; isTransaction: boolean }> {
-    const isTransaction = await UserModel.checkActiveInvoiceAndPackage(actor, "base:user:create:create");
+export type UserCreateContext = { input: CreateUserInput; actor: ActivityActor } & TransactionBilling;
+
+export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, UserCreateContext> {
+  protected async preExec(input: CreateUserInput, actor?: ActivityActor): Promise<UserCreateContext> {
+    const billing = await checkTransaction(actor, "base:user:create:create");
 
     const validated = await this.validate<CreateUserInput>(createUserSchema, input);
     if (validated.organization_id) {
@@ -35,7 +38,7 @@ export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, { inpu
         throw new ForbiddenException("Insufficient permissions.");
       }
     }
-    return { input: validated, actor: actor ?? null, isTransaction };
+    return { input: validated, actor: actor ?? null, ...billing };
   }
 
   protected async validate<TValidated = CreateUserInput>(schema: Schema, input: CreateUserInput): Promise<TValidated> {
@@ -70,7 +73,7 @@ export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, { inpu
     return validatedInput;
   }
 
-  protected async execute(context: { input: CreateUserInput; actor: ActivityActor; isTransaction: boolean }): Promise<User> {
+  protected async execute(context: UserCreateContext): Promise<User> {
     const { input } = context;
     await UserModelFactory();
     const user = await UserModel.create({
@@ -93,18 +96,15 @@ export class UserCreateUseCase extends BaseUseCase<CreateUserInput, User, { inpu
     return result;
   }
 
-  protected async postExec(
-    result: User,
-    context?: { input: CreateUserInput; actor: ActivityActor; isTransaction: boolean },
-  ): Promise<User> {
-    void recordActivityLog({
+  protected async postExec(result: User, context?: UserCreateContext): Promise<User> {
+    await settleTransaction({
       actor: context?.actor ?? null,
       operation: "create",
       entity: "user",
       entity_uuid: result.uuid,
       origin: null,
       updated: result,
-      is_transaction: context?.isTransaction ?? false,
+      billing: context ?? null,
     });
     return super.postExec(result, context);
   }
