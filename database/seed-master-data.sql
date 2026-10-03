@@ -1086,6 +1086,153 @@ VALUES
         NULL
     ) ON CONFLICT DO NOTHING;
 
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        '8d4fe6a8-b514-4920-b4a9-7a2e3a6b3988',
+        'base:menu:sales:sales',
+        'Access for sales module',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        'f3791d6b-896b-402a-831b-29d73eccb533',
+        'base:menu:sales:lead',
+        'Access for sales lead module',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        '6528d791-9dcb-4186-92f2-eeb855ddfc47',
+        'sales:lead:list:list',
+        'Access for list lead',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        'd9eede66-bf3c-448d-8e80-f906123f3402',
+        'sales:lead:create:create',
+        'Access for create lead',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        'b1ee7086-c45c-4638-b522-488c5ec8ff68',
+        'sales:lead:view:detail',
+        'Access for view detail lead',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        '94c4f433-1e2b-4598-bca1-a0431d44c1be',
+        'sales:lead:view:update',
+        'Access for update detail lead',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        '29aa354e-4343-4e52-8c44-22b6214ad08a',
+        'sales:lead:view:delete',
+        'Access for delete lead',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
 --
 -- Data for Name: menus; Type: TABLE DATA; Schema: public; Owner: moladin
 --
@@ -1306,6 +1453,68 @@ VALUES
         0
     ) ON CONFLICT DO NOTHING;
 
+INSERT INTO
+    public.base_menus (
+        uuid,
+        icon,
+        parent,
+        menu,
+        action_id,
+        description,
+        redirection,
+        status,
+        created_at,
+        updated_at,
+        deleted_at,
+        weight
+    )
+VALUES
+    (
+        '33740e19-ef64-4c13-8707-0052e866bd23',
+        '',
+        NULL,
+        'Sales',
+        '8d4fe6a8-b514-4920-b4a9-7a2e3a6b3988',
+        'Access to sales settings',
+        '#',
+        'active',
+        NOW (),
+        NOW (),
+        NULL,
+        0
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_menus (
+        uuid,
+        icon,
+        parent,
+        menu,
+        action_id,
+        description,
+        redirection,
+        status,
+        created_at,
+        updated_at,
+        deleted_at,
+        weight
+    )
+VALUES
+    (
+        '3db9de59-92b2-49b1-8e43-4fa127a281ae',
+        '-',
+        '33740e19-ef64-4c13-8707-0052e866bd23',
+        'Lead',
+        'f3791d6b-896b-402a-831b-29d73eccb533',
+        'Access to lead settings',
+        '/sales/views/leads',
+        'active',
+        NOW (),
+        NOW (),
+        NULL,
+        0
+    ) ON CONFLICT DO NOTHING;
+
 --
 -- Data for Name: roles; Type: TABLE DATA; Schema: public; Owner: moladin
 --
@@ -1412,7 +1621,14 @@ WHERE
         'sass:package:view:update',
         'sass:package:view:delete',
         'sass:invoice:list:list',
-        'sass:invoice:view:detail'
+        'sass:invoice:view:detail',
+        'base:menu:sales:sales',
+        'base:menu:sales:lead',
+        'sales:lead:list:list',
+        'sales:lead:create:create',
+        'sales:lead:view:detail',
+        'sales:lead:view:update',
+        'sales:lead:view:delete'
     ) ON CONFLICT DO NOTHING;
 
 --
@@ -1465,6 +1681,32 @@ WHERE
     AND a.action IN (
         'sass:invoice:list:list',
         'sass:invoice:view:detail'
+    ) ON CONFLICT DO NOTHING;
+
+--
+-- Grants for role: admin-organization (sales lead codes)
+--
+INSERT INTO
+    public.base_permissions (uuid, role_id, action_id, created_at, updated_at)
+SELECT
+    gen_random_uuid (),
+    r.uuid,
+    a.uuid,
+    NOW (),
+    NOW ()
+FROM
+    public.base_roles r
+    CROSS JOIN public.base_actions a
+WHERE
+    r.slug = 'admin-organization'
+    AND a.action IN (
+        'base:menu:sales:sales',
+        'base:menu:sales:lead',
+        'sales:lead:list:list',
+        'sales:lead:create:create',
+        'sales:lead:view:detail',
+        'sales:lead:view:update',
+        'sales:lead:view:delete'
     ) ON CONFLICT DO NOTHING;
 
 --
@@ -1685,6 +1927,317 @@ VALUES
         NULL,
         1000,
         '[{"action_id": "c366e903-ae3e-4005-b03b-9a08412fabc3", "credit": 1000}]',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+--
+-- Sample data for sales lead statuses
+--
+INSERT INTO
+    public.sales_lead_statuses (
+        uuid,
+        organization_id,
+        name,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        '422a0629-e670-4051-af2c-7eac487b0436',
+        '46896864-fecd-4a68-a19c-a715530100a9',
+        'New Contact',
+        'Fresh inbound lead, not yet contacted',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'dd001a52-401a-463b-acd0-34a3741b15d1',
+        '46896864-fecd-4a68-a19c-a715530100a9',
+        'Contacted',
+        'First outreach done, awaiting response',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '36095ad6-d704-4f9e-a7e8-03e749a83efb',
+        '46896864-fecd-4a68-a19c-a715530100a9',
+        'Qualified',
+        'Budget and need confirmed',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'd9904c42-be30-4aae-9e72-d4e699bf33ee',
+        NULL,
+        'Proposal Sent',
+        'Proposal delivered, pending decision',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '09180e2c-381a-47c2-bd31-6499f584569f',
+        NULL,
+        'Converted',
+        'Lead won and converted to customer',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+--
+-- Sample data for sales lead metadata fields
+--
+INSERT INTO
+    public.sales_lead_metadata_fields (
+        uuid,
+        organization_id,
+        name,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        '59309034-640b-4ce9-9b79-45291d57bfea',
+        '46896864-fecd-4a68-a19c-a715530100a9',
+        'Budget Range',
+        'Prospect declared budget bracket',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '836c6d8d-179f-46c3-8a0d-d58d9b7e8d1d',
+        '46896864-fecd-4a68-a19c-a715530100a9',
+        'Decision Maker',
+        'Person holding purchase authority',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'df4fc6a3-3f1d-4abe-a627-c3d07d6c6160',
+        NULL,
+        'Timeline',
+        'Expected decision timeframe',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'bee5f818-c5f5-456b-93b8-3949c1429cc8',
+        NULL,
+        'Competitor',
+        'Incumbent or competing vendor',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+--
+-- Sample data for sales leads
+--
+INSERT INTO
+    public.sales_leads (
+        uuid,
+        name,
+        email,
+        phone_number,
+        company,
+        source,
+        status,
+        value,
+        assigned_to,
+        organization_id,
+        notes,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        '45ba7315-830f-42e5-a54f-592f9154d0b1',
+        'Andi Pratama',
+        'andi.pratama@example.com',
+        '+6281234567890',
+        'PT Maju Jaya',
+        'website',
+        'new',
+        15000000,
+        '11240574-f818-48b3-adb2-291df37d43d4',
+        '46896864-fecd-4a68-a19c-a715530100a9',
+        'Inbound from website form.',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '3cab3d41-e8b6-4ac7-b8ba-9bb633da2d5a',
+        'Siti Rahayu',
+        'siti.rahayu@example.com',
+        '+6289876543210',
+        'CV Berkah Abadi',
+        'referral',
+        'contacted',
+        25000000,
+        '11240574-f818-48b3-adb2-291df37d43d4',
+        '46896864-fecd-4a68-a19c-a715530100a9',
+        'Referred by existing customer.',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '9ce477f1-9088-4725-bb2a-93ed6d765285',
+        'Budi Santoso',
+        'budi.santoso@example.com',
+        '+6276543210987',
+        'PT Sinar Terang',
+        'ads',
+        'qualified',
+        50000000,
+        NULL,
+        NULL,
+        'Unassigned inbound lead from ads campaign.',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '8741717b-c478-4771-be12-fcb4dab002c1',
+        'Dewi Lestari',
+        'dewi.lestari@example.com',
+        '+6281122334455',
+        NULL,
+        'event',
+        'new',
+        NULL,
+        NULL,
+        '46896864-fecd-4a68-a19c-a715530100a9',
+        'Met at Jakarta expo booth.',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '6d185b77-bffc-4c72-ae48-054a7054469c',
+        'John Miller',
+        'john.miller@example.com',
+        '+15550123456',
+        'Acme Corp',
+        'cold_call',
+        'converted',
+        120000000,
+        '11240574-f818-48b3-adb2-291df37d43d4',
+        '46896864-fecd-4a68-a19c-a715530100a9',
+        'Enterprise deal closed after 3 calls.',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+--
+-- Sample data for sales lead metadata
+--
+INSERT INTO
+    public.sales_lead_metadata (
+        uuid,
+        lead_metadata_field_id,
+        value,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        '238ee5fe-785a-45e9-bc4c-f32edcd385b3',
+        '59309034-640b-4ce9-9b79-45291d57bfea',
+        '10-25jt',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '5af84b3f-47a6-4903-8fe0-cce3ad067c5e',
+        'df4fc6a3-3f1d-4abe-a627-c3d07d6c6160',
+        'Q4 2026',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '4a3fa020-54ed-4d08-b5e2-f2c8f3aa08fa',
+        '59309034-640b-4ce9-9b79-45291d57bfea',
+        '25-50jt',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'a9defba5-e8ef-4df1-8c7a-b4e3b002b744',
+        '836c6d8d-179f-46c3-8a0d-d58d9b7e8d1d',
+        'Ibu Siti (owner)',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '71bee402-0f9b-46fb-b644-12f71e25ec03',
+        'bee5f818-c5f5-456b-93b8-3949c1429cc8',
+        'Vendor X',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'f1b71a90-948c-496e-b177-79508d73396c',
+        '59309034-640b-4ce9-9b79-45291d57bfea',
+        '>100jt',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '5f053446-856c-4e17-a70f-7244bd81b480',
+        'df4fc6a3-3f1d-4abe-a627-c3d07d6c6160',
+        'ASAP',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '1452afda-cf97-4e6c-8c5f-8e431b4142e9',
+        'df4fc6a3-3f1d-4abe-a627-c3d07d6c6160',
+        'Next month',
         'active',
         NOW (),
         NOW (),

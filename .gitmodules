@@ -1,3 +1,6 @@
 [submodule "app/sass"]
 	path = app/sass
 	url = https://github.com/vortexgin/my-sass-library.git
+[submodule "app/sales"]
+	path = app/sales
+	url = https://github.com/vortexgin/my-sales-library.git
