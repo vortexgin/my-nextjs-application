@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "rm -fr .next && npm run build && next start",
     "lint": "eslint",
     "keys:generate": "node scripts/generate-keys.mjs"
   },

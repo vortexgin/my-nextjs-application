@@ -1233,6 +1233,240 @@ VALUES
         NULL
     ) ON CONFLICT DO NOTHING;
 
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        'bf33f334-9b8b-4b04-bafb-c11f43bd2195',
+        'base:menu:sales:lead-status',
+        'Access for sales lead status module',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        'd0a51628-eba6-4d65-ad9a-5f24cf911f2e',
+        'base:menu:sales:lead-metadata-field',
+        'Access for sales lead metadata field module',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
+        '335117e7-4c7e-4fea-ad4c-9a86ad16e50a',
+        'sales:lead-status:list:list',
+        'Access for list lead status',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'e66836ab-3115-416e-a687-05fc36b3c930',
+        'sales:lead-status:create:create',
+        'Access for create lead status',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '1495dd74-c8c8-4972-9aff-945f72416d72',
+        'sales:lead-status:view:detail',
+        'Access for view detail lead status',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'f5032dd0-fc65-47b8-a23f-b9ef1ec766a7',
+        'sales:lead-status:view:update',
+        'Access for update detail lead status',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'b50a618c-425d-4664-9123-3a40238d9ef2',
+        'sales:lead-status:view:delete',
+        'Access for delete lead status',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '35ea5274-cc0f-4e83-bcbc-a07479bdf61f',
+        'sales:lead-metadata-field:list:list',
+        'Access for list lead metadata field',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '32e15a24-3833-40f5-bfdd-a1aae48efe07',
+        'sales:lead-metadata-field:create:create',
+        'Access for create lead metadata field',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'a17136ec-5cfe-4142-ba96-d0453531ebe9',
+        'sales:lead-metadata-field:view:detail',
+        'Access for view detail lead metadata field',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '46c2a5f7-1d9f-4534-a0d0-fcafa0fc9528',
+        'sales:lead-metadata-field:view:update',
+        'Access for update detail lead metadata field',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'e078c91d-744e-48f9-8ab3-1bce3b17d139',
+        'sales:lead-metadata-field:view:delete',
+        'Access for delete lead metadata field',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '5b66d18b-46a7-424d-8abb-f2d6151a8039',
+        'sales:lead-metadata:list:list',
+        'Access for list lead metadata',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '69fe51c9-cb2e-4baa-bdd4-642791457b05',
+        'sales:lead-metadata:create:create',
+        'Access for create lead metadata',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'f26dc56e-6ab2-42ac-9103-a75001686d1e',
+        'sales:lead-metadata:view:detail',
+        'Access for view detail lead metadata',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '5d04371e-5c92-48a5-92b1-f2a541077fbe',
+        'sales:lead-metadata:view:update',
+        'Access for update detail lead metadata',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '342b837b-199d-44c6-a3e6-3bf19ec30ccf',
+        'sales:lead-metadata:view:delete',
+        'Access for delete lead metadata',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'a79657d7-7c8f-438a-9705-c91ba07cefd1',
+        'sales:lead-activity:list:list',
+        'Access for list lead activity',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'f4c91d3c-0d86-4bc5-bbb9-54c756c22973',
+        'sales:lead-activity:create:create',
+        'Access for create lead activity',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'cd65f93c-ea59-409f-863b-7aa4dfd020d2',
+        'sales:lead-activity:view:detail',
+        'Access for view detail lead activity',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        '5eb402f2-9acb-4d19-9759-7241e1bf2f81',
+        'sales:lead-activity:view:update',
+        'Access for update detail lead activity',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ),
+    (
+        'd1b8fc73-50fb-4614-9b0f-e4426584999b',
+        'sales:lead-activity:view:delete',
+        'Access for delete lead activity',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
 --
 -- Data for Name: menus; Type: TABLE DATA; Schema: public; Owner: moladin
 --
@@ -1515,6 +1749,68 @@ VALUES
         0
     ) ON CONFLICT DO NOTHING;
 
+INSERT INTO
+    public.base_menus (
+        uuid,
+        icon,
+        parent,
+        menu,
+        action_id,
+        description,
+        redirection,
+        status,
+        created_at,
+        updated_at,
+        deleted_at,
+        weight
+    )
+VALUES
+    (
+        '03ed457a-eb34-418a-9a32-67a0770127fe',
+        '-',
+        '33740e19-ef64-4c13-8707-0052e866bd23',
+        'Lead Status',
+        'bf33f334-9b8b-4b04-bafb-c11f43bd2195',
+        'Access to lead status settings',
+        '/sales/views/lead-statuses',
+        'active',
+        NOW (),
+        NOW (),
+        NULL,
+        1
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_menus (
+        uuid,
+        icon,
+        parent,
+        menu,
+        action_id,
+        description,
+        redirection,
+        status,
+        created_at,
+        updated_at,
+        deleted_at,
+        weight
+    )
+VALUES
+    (
+        'e29e0207-4975-4ba9-ba3a-a2fcf616b8f7',
+        '-',
+        '33740e19-ef64-4c13-8707-0052e866bd23',
+        'Metadata Field',
+        'd0a51628-eba6-4d65-ad9a-5f24cf911f2e',
+        'Access to metadata field settings',
+        '/sales/views/lead-metadata-fields',
+        'active',
+        NOW (),
+        NOW (),
+        NULL,
+        2
+    ) ON CONFLICT DO NOTHING;
+
 --
 -- Data for Name: roles; Type: TABLE DATA; Schema: public; Owner: moladin
 --
@@ -1628,7 +1924,29 @@ WHERE
         'sales:lead:create:create',
         'sales:lead:view:detail',
         'sales:lead:view:update',
-        'sales:lead:view:delete'
+        'sales:lead:view:delete',
+        'sales:lead-status:list:list',
+        'sales:lead-status:create:create',
+        'sales:lead-status:view:detail',
+        'sales:lead-status:view:update',
+        'sales:lead-status:view:delete',
+        'sales:lead-metadata-field:list:list',
+        'sales:lead-metadata-field:create:create',
+        'sales:lead-metadata-field:view:detail',
+        'sales:lead-metadata-field:view:update',
+        'sales:lead-metadata-field:view:delete',
+        'sales:lead-metadata:list:list',
+        'sales:lead-metadata:create:create',
+        'sales:lead-metadata:view:detail',
+        'sales:lead-metadata:view:update',
+        'sales:lead-metadata:view:delete',
+        'sales:lead-activity:list:list',
+        'sales:lead-activity:create:create',
+        'sales:lead-activity:view:detail',
+        'sales:lead-activity:view:update',
+        'sales:lead-activity:view:delete',
+        'base:menu:sales:lead-status',
+        'base:menu:sales:lead-metadata-field'
     ) ON CONFLICT DO NOTHING;
 
 --
@@ -1706,7 +2024,29 @@ WHERE
         'sales:lead:create:create',
         'sales:lead:view:detail',
         'sales:lead:view:update',
-        'sales:lead:view:delete'
+        'sales:lead:view:delete',
+        'sales:lead-status:list:list',
+        'sales:lead-status:create:create',
+        'sales:lead-status:view:detail',
+        'sales:lead-status:view:update',
+        'sales:lead-status:view:delete',
+        'sales:lead-metadata-field:list:list',
+        'sales:lead-metadata-field:create:create',
+        'sales:lead-metadata-field:view:detail',
+        'sales:lead-metadata-field:view:update',
+        'sales:lead-metadata-field:view:delete',
+        'sales:lead-metadata:list:list',
+        'sales:lead-metadata:create:create',
+        'sales:lead-metadata:view:detail',
+        'sales:lead-metadata:view:update',
+        'sales:lead-metadata:view:delete',
+        'sales:lead-activity:list:list',
+        'sales:lead-activity:create:create',
+        'sales:lead-activity:view:detail',
+        'sales:lead-activity:view:update',
+        'sales:lead-activity:view:delete',
+        'base:menu:sales:lead-status',
+        'base:menu:sales:lead-metadata-field'
     ) ON CONFLICT DO NOTHING;
 
 --

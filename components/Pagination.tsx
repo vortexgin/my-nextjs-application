@@ -18,9 +18,11 @@ export function Pagination({
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
       <p className="text-sm text-slate-500" aria-live="polite">
-        {count === 0 && !loading
-          ? "No records."
-          : `Showing ${offset + 1}–${offset + count} · Page ${page}${hasNext ? "+" : ""}`}
+        {loading
+          ? "Loading…"
+          : count === 0
+            ? "No records."
+            : `Showing ${offset + 1}–${offset + count} · Page ${page}${hasNext ? "+" : ""}`}
       </p>
       <div className="flex items-center gap-2">
         <button

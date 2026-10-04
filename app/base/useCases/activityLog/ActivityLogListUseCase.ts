@@ -1,10 +1,13 @@
 import Joi from "joi";
+import { Op } from "sequelize";
 import ActivityLogModelFactory, { type ActivityLog } from "@/app/base/models/ActivityLogModel";
 import { BaseUseCase } from "@/useCases/BaseUseCase";
 
 export type ListActivityLogsFilter = {
   entity?: string;
+  entities?: string;
   entity_uuid?: string;
+  entity_uuids?: string;
 };
 
 export type ListActivityLogsInput = {
@@ -16,8 +19,8 @@ export type ListActivityLogsInput = {
 };
 
 export type ListActivityLogsQuery = {
-  entity?: string;
-  entity_uuid?: string;
+  entities?: string[];
+  entity_uuids?: string[];
   sortProperty: string;
   sortDirection: "ASC" | "DESC";
   offset: number;
@@ -31,10 +34,23 @@ const SORTABLE_COLUMNS: Record<string, string> = {
   created_at: "created_at",
 };
 
+function splitList(value?: string): string[] | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const parts = value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return parts.length > 0 ? [...new Set(parts)] : undefined;
+}
+
 const listActivityLogsSchema = Joi.object({
   filter: Joi.object({
     entity: Joi.string().trim().allow("").optional(),
-    entity_uuid: Joi.string().uuid({ version: "uuidv4" }).optional(),
+    entities: Joi.string().trim().allow("").optional(),
+    entity_uuid: Joi.string().trim().allow("").optional(),
+    entity_uuids: Joi.string().trim().allow("").optional(),
   }).optional(),
   sortProperty: Joi.string()
     .valid(...Object.keys(SORTABLE_COLUMNS))
@@ -60,9 +76,14 @@ export class ActivityLogListUseCase extends BaseUseCase<
     }>(listActivityLogsSchema, input ?? {});
     const filter = validated.filter ?? {};
 
+    // Backward compatible: `filter[entity]` / `filter[entity_uuid]` accept
+    // single values OR comma-separated lists. Plural aliases supported too.
+    const rawEntities = [filter.entity, filter.entities].filter(Boolean).join(",");
+    const rawUuids = [filter.entity_uuid, filter.entity_uuids].filter(Boolean).join(",");
+
     return {
-      entity: filter.entity?.trim() || undefined,
-      entity_uuid: filter.entity_uuid || undefined,
+      entities: splitList(rawEntities),
+      entity_uuids: splitList(rawUuids),
       sortProperty: SORTABLE_COLUMNS[validated.sortProperty.toLowerCase()] ?? "created_at",
       sortDirection: validated.sortDirection.toUpperCase() as "ASC" | "DESC",
       offset: validated.offset,
@@ -72,18 +93,19 @@ export class ActivityLogListUseCase extends BaseUseCase<
 
   protected async execute(context: ListActivityLogsQuery): Promise<ActivityLog[]> {
     const ActivityLogModel = await ActivityLogModelFactory();
-    const conditions: Record<string, unknown>[] = [];
+    const conditions: Record<string, unknown> = {};
 
-    if (context.entity) {
-      conditions.push({ entity: context.entity });
+    if (context.entities && context.entities.length > 0) {
+      conditions.entity = context.entities.length === 1 ? context.entities[0] : { [Op.in]: context.entities };
     }
 
-    if (context.entity_uuid) {
-      conditions.push({ entity_uuid: context.entity_uuid });
+    if (context.entity_uuids && context.entity_uuids.length > 0) {
+      conditions.entity_uuid =
+        context.entity_uuids.length === 1 ? context.entity_uuids[0] : { [Op.in]: context.entity_uuids };
     }
 
     const logs = await ActivityLogModel.findAll({
-      where: conditions.length > 0 ? conditions.reduce((acc, cond) => ({ ...acc, ...cond }), {}) : {},
+      where: conditions,
       order: [[context.sortProperty, context.sortDirection]],
       offset: context.offset,
       limit: context.limit,

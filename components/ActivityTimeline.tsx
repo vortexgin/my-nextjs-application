@@ -51,25 +51,38 @@ function DataBlock({ title, data }: { title: string; data: Record<string, unknow
 export function ActivityTimeline({
   entity,
   entityUuid,
+  entities,
+  entityUuids,
 }: {
-  entity: string;
-  entityUuid: string;
+  entity?: string | string[];
+  entityUuid?: string | string[];
+  /** Multi-entity support: e.g. ["lead","lead_metadata","lead_activity"] */
+  entities?: string | string[];
+  /** Multi-uuid support: lead uuid + related metadata/activity uuids */
+  entityUuids?: string | string[];
 }) {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const entityParam = [entity, entities].flat().filter(Boolean).join(",");
+  const uuidParam = [entityUuid, entityUuids].flat().filter(Boolean).join(",");
 
   useEffect(() => {
     let active = true;
     (async () => {
       try {
         const params = new URLSearchParams({
-          "filter[entity]": entity,
-          "filter[entity_uuid]": entityUuid,
           sortProperty: "created_at",
           sortDirection: "desc",
           limit: "50",
         });
+        if (entityParam) {
+          params.set("filter[entity]", entityParam);
+        }
+        if (uuidParam) {
+          params.set("filter[entity_uuid]", uuidParam);
+        }
         const envelope = await getEncrypted<ActivityLog[]>(`${API_PATH}?${params.toString()}`);
         if (!active) {
           return;
@@ -92,7 +105,7 @@ export function ActivityTimeline({
     return () => {
       active = false;
     };
-  }, [entity, entityUuid]);
+  }, [entityParam, uuidParam]);
 
   return (
     <div className="mt-6 rounded-[28px] border border-slate-200 bg-white/90 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur-sm sm:p-8">

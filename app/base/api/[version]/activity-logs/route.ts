@@ -10,10 +10,15 @@ async function handleGet(request: NextRequest) {
   try {
     await connectDatabase();
     const params = request.nextUrl.searchParams;
+    // Supports single values and comma-separated multi-entity queries,
+    // e.g. filter[entity]=lead,lead_metadata,lead_activity
+    // and filter[entity_uuid]=uuid1,uuid2 (+ plural aliases).
     const logs = await new ActivityLogListUseCase().exec({
       filter: {
         entity: queryParam(params, "filter[entity]"),
+        entities: queryParam(params, "filter[entities]"),
         entity_uuid: queryParam(params, "filter[entity_uuid]"),
+        entity_uuids: queryParam(params, "filter[entity_uuids]"),
       },
       sortProperty: queryParam(params, "sortProperty"),
       sortDirection: queryParam(params, "sortDirection"),
