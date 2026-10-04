@@ -1287,6 +1287,27 @@ INSERT INTO
     )
 VALUES
     (
+        '78e370ab-e0c3-4c92-bdb4-dcc9582bbf56',
+        'base:tools:upload:upload',
+        'Access for tools file upload',
+        'active',
+        NOW (),
+        NOW (),
+        NULL
+    ) ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    (
         '335117e7-4c7e-4fea-ad4c-9a86ad16e50a',
         'sales:lead-status:list:list',
         'Access for list lead status',
@@ -1946,7 +1967,8 @@ WHERE
         'sales:lead-activity:view:update',
         'sales:lead-activity:view:delete',
         'base:menu:sales:lead-status',
-        'base:menu:sales:lead-metadata-field'
+        'base:menu:sales:lead-metadata-field',
+        'base:tools:upload:upload'
     ) ON CONFLICT DO NOTHING;
 
 --
@@ -2046,7 +2068,8 @@ WHERE
         'sales:lead-activity:view:update',
         'sales:lead-activity:view:delete',
         'base:menu:sales:lead-status',
-        'base:menu:sales:lead-metadata-field'
+        'base:menu:sales:lead-metadata-field',
+        'base:tools:upload:upload'
     ) ON CONFLICT DO NOTHING;
 
 --

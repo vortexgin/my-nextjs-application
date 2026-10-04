@@ -15,12 +15,13 @@ async function handleGet(request: NextRequest) {
     const params = request.nextUrl.searchParams;
     const users = await new UserListUseCase().exec(
       {
-        filter: {
-          q: queryParam(params, "filter[q]"),
-          name: queryParam(params, "filter[name]"),
-          email: queryParam(params, "filter[email]"),
-          phone: queryParam(params, "filter[phone]"),
-        },
+      filter: {
+        q: queryParam(params, "filter[q]"),
+        name: queryParam(params, "filter[name]"),
+        email: queryParam(params, "filter[email]"),
+        phone: queryParam(params, "filter[phone]"),
+        org_scope: queryParam(params, "filter[org_scope]"),
+      },
         sortProperty: queryParam(params, "sortProperty"),
         sortDirection: queryParam(params, "sortDirection"),
         offset: queryParam(params, "offset"),

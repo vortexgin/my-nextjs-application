@@ -10,6 +10,7 @@ export type ListUsersFilter = {
   name?: string;
   email?: string;
   phone?: string;
+  org_scope?: string;
 };
 
 export type ListUsersInput = {
@@ -25,6 +26,7 @@ export type ListUsersQuery = {
   name?: string;
   email?: string;
   phone?: string;
+  orgScope?: string;
   sortProperty: string;
   sortDirection: "ASC" | "DESC";
   offset: number;
@@ -49,6 +51,7 @@ const listUsersSchema = Joi.object({
     name: Joi.string().trim().allow("").optional(),
     email: Joi.string().trim().allow("").optional(),
     phone: Joi.string().trim().allow("").optional(),
+    org_scope: Joi.string().trim().allow("").optional(),
   }).optional(),
   sortProperty: Joi.string()
     .valid(...Object.keys(SORTABLE_COLUMNS))
@@ -75,6 +78,7 @@ export class UserListUseCase extends BaseUseCase<ListUsersInput | void, User[], 
       name: filter.name?.trim() || undefined,
       email: filter.email?.trim().toLowerCase() || undefined,
       phone: filter.phone?.trim() || undefined,
+      orgScope: filter.org_scope?.trim() || undefined,
       sortProperty: SORTABLE_COLUMNS[validated.sortProperty.toLowerCase()] ?? "created_at",
       sortDirection: validated.sortDirection.toUpperCase() as "ASC" | "DESC",
       offset: validated.offset,
@@ -116,6 +120,48 @@ export class UserListUseCase extends BaseUseCase<ListUsersInput | void, User[], 
     conditions.push({ uuid: { [Op.in]: peers.map((peer: { user_id: string }) => peer.user_id) } });
   }
 
+  /**
+   * Opt-in strict organization scoping (`filter[org_scope]=actor`), used by
+   * pickers such as the lead assignee dropdown. Linked actors see only users
+   * in their own organization; actors without an organization link see only
+   * users that are likewise unlinked. Anonymous callers keep full visibility.
+   */
+  private async applyActorOrgScope(
+    conditions: Record<string, unknown>[],
+    actor: ActivityActor,
+  ): Promise<void> {
+    const actorUuid = (actor as Record<string, unknown> | null)?.uuid;
+    if (typeof actorUuid !== "string") {
+      return;
+    }
+
+    const models = await UserModel.loadOrganizationLinkModels();
+    if (!models) {
+      return;
+    }
+
+    const link = await models.OrganizationUserModel.findOne({
+      where: { user_id: actorUuid, deleted_at: null },
+    });
+    if (!link) {
+      const linked = await models.OrganizationUserModel.findAll({
+        where: { deleted_at: null },
+        attributes: ["user_id"],
+      });
+      const linkedIds = linked.map((row: { user_id: string }) => row.user_id);
+      if (linkedIds.length > 0) {
+        conditions.push({ uuid: { [Op.notIn]: linkedIds } });
+      }
+      return;
+    }
+
+    const peers = await models.OrganizationUserModel.findAll({
+      where: { organization_id: link.organization_id, deleted_at: null },
+      attributes: ["user_id"],
+    });
+    conditions.push({ uuid: { [Op.in]: peers.map((peer: { user_id: string }) => peer.user_id) } });
+  }
+
   protected async execute(context: ListUsersQuery): Promise<User[]> {
     const UserModel = await UserModelFactory();
     const conditions: Record<string, unknown>[] = [{ deleted_at: null }];
@@ -144,6 +190,9 @@ export class UserListUseCase extends BaseUseCase<ListUsersInput | void, User[], 
     }
 
     await this.applyOrganizationScope(conditions, context.actor);
+    if (context.orgScope === "actor") {
+      await this.applyActorOrgScope(conditions, context.actor);
+    }
 
     const users = await UserModel.findAll({
       where: { [Op.and]: conditions },

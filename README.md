@@ -1,89 +1,98 @@
 # VortexGin
 
-Centralized SSO and workspace administration platform. One login serves the
-whole workspace: secure sign-in with encrypted session tokens, password
-recovery via emailed reset links, and role-based access control (RBAC)
-governing every API and every screen. An admin console manages the access
-model itself — actions (permission codes), menus (sidebar navigation), roles,
-users, and their grants — with a full activity audit trail behind it all.
+Secure single sign-on, workspace administration, SaaS billing, sales, and
+object-storage uploads. Built with Next.js 16 (App Router), React 19,
+Sequelize 6 + PostgreSQL.
 
-## What was built
+## Modules
 
-**Foundation & access control**
+| Module | Path | What |
+|---|---|---|
+| SSO | `app/sso` | sign in, sessions (24h TTL), forgot / update password |
+| Base admin | `app/base` | users, roles, menus, actions, activity logs, file-upload tool |
+| Dashboard | `app/dashboard` | shell + sidebar, profile, change password |
+| SaaS billing | `app/sass` (submodule `my-sass-library`) | organizations, packages, invoices; quota/transaction credit enforcement |
+| Sales | `app/sales` (submodule `my-sales-library`) | leads (kanban board), activities, metadata, metadata fields, statuses |
 
-- Dashboard shell: collapsible sidebar (menus served live from the menus
-  API, permission-gated per item), topbar with user dropdown (update profile,
-  change password, logout that kills the server session).
-- Unified permission rule in one module: empty/`"authorized"` grants,
-  otherwise role-slug or permission overlap — used identically by API
-  middleware, server pages, and client gates.
-- Encrypted transport (hybrid RSA + AES-GCM) on all protected APIs, with auth
-  headers forwarded through the decryption layer.
+## Tech Stack
 
-**CRUD consoles** (`/base/views/...`, all following one pattern: server guard
-→ permission gate → client components → encrypted API)
-
-- Actions, menus (live action/parent dropdowns, hierarchical indented
-  parents, cycle-safe), roles (tabbed Domain > Entity permission picker),
-  users (role dropdown, password handled safely).
-- Shared kit: generic `Table` (sortable headers, limit+1 pagination),
-  `Pagination`, `StatusBadge`, `AccessDenied`.
-
-**Audit**
-
-- `activity_logs` (actor snapshot, before-state origin, after-state updated)
-  written from use-case `postExec` — success-only, secrets stripped, never
-  breaks the request.
-- Vertical `ActivityTimeline` embedded on every detail page; list API and
-  seeder wiring included.
-
-**Data layer hygiene**
-
-- Table rename to `base_*`/`sso_*` across models, migrations, and seed; FKs
-  repaired; orphan rows removed; unique constraint restored; legacy tables
-  dropped after backup.
-
-## Impact
-
-- **Single source of truth for access**: permissions, menus, roles, and users
-  are managed in one UI instead of SQL — onboarding a new module is seed
-  rows, not code.
-- **Auditable by default**: every mutation records who did what, before and
-  after, visible on each record's timeline.
-- **Consistent enforcement**: one permission function everywhere eliminates
-  view-vs-API drift (the class of bug that silently over- or under-grants).
-- **Reusable patterns**: new entities ship as columns + fetch + form on top of
-  the generic table, and new APIs get auth, encryption, actor context, and
-  logging by wrapping handlers.
+Next.js 16 App Router · React 19 · Tailwind 4 · Sequelize 6 + PostgreSQL ·
+Joi validation · hybrid RSA + AES-GCM API transport · `cos-nodejs-sdk-v5`
+(Tencent COS, S3-compatible).
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
-npm run dev
+npm install
+npm run keys:generate                      # RSA keypair for API encryption (keys/)
+export DATABASE_URL="postgres://..."       # dotenv is NOT installed; sequelize-cli needs this exported
+npx sequelize-cli db:migrate
+psql "$DATABASE_URL" -f database/seed-master-data.sql
+npm run dev                                # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see
-the result. Sign in flows start at `/sso`; the admin console lives under
-`/base/views/...` and the workspace dashboard under `/dashboard`.
-
-## Database
-
-Migrations live in `migrations/` and run with the Sequelize CLI
-(`DATABASE_URL` must be exported — the repo has no `dotenv` dependency, so
-`.env` is not auto-loaded for CLI runs):
+Production (PM2, process name `my-next-app`):
 
 ```bash
-DATABASE_URL="$(sed -n 's/^DATABASE_URL=//p' .env | head -1)"
-DATABASE_URL="$DBURL" npx sequelize-cli db:migrate
+npm run build
+pm2 start ecosystem.config.js            # next start -p 3000
+pm2 restart my-next-app
 ```
 
-Master data (roles, actions, menus, admin user, grants) seeds from
-`database/seed-master-data.sql`:
+### Environment (`.env`)
 
-```bash
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/seed-master-data.sql
-```
+| Key | Purpose |
+|---|---|
+| `DATABASE_URL` | Postgres connection string |
+| `APP_URL` | public origin for outbound links |
+| `MAILGUN_API_KEY` / `MAILGUN_DOMAIN` / `MAILGUN_FROM` | outbound mail |
+| `COS_SECRET_ID` / `COS_SECRET_KEY` / `COS_BUCKET` / `COS_REGION` | Tencent COS uploads (required) |
+| `COS_ENDPOINT` / `COS_UPLOAD_PREFIX` / `COS_MAX_FILE_BYTES` | COS overrides (optional) |
 
-Sample login: `admin@vortexgin.com` / `admin123` (see seed file header).
+## Conventions
+
+- **Vertical slice** per entity (see `app/base/models/UserModel.ts` flow):
+  `models/` (`toApi()` + lazy factory) → `useCases/` (`List/Get/Create/Update/Delete`
+  extending `BaseUseCase`: Joi in `preExec`, activity log in `postExec`) →
+  `api/[version]/` routes (`withAuthorization` + `withEncryption`, `ok`/`fail`
+  envelopes) → `components/` + `views/` + `paths.ts`.
+- **Billing baseline** (`useCases/TransactionUseCase.ts`): gated creates call
+  `checkTransaction(actor, action)` in `preExec` and `settleTransaction(...)` in
+  `postExec` — consumes invoice `credit_usage` on quota/transaction packages and
+  records `credit` on the activity timeline. Only lead/user creates are gated;
+  master-data creates log plain activity rows.
+- **Permissions** `"domain:entity:view:scope"` (e.g. `sales:lead:list:list`) or
+  `"authorized"`; checked server-side (`withAuthorization`) and client-side
+  (`AuthComponent`). Sidebar menus are gated by `base:menu:*` codes.
+- **Encrypted transport:** clients handshake `GET /base/api/v1/public-key`, send
+  `x-key-exchange` + `{iv,data}` JSON envelopes; `x-app-verbose: 1` bypasses for
+  debugging (file uploads use base64-inside-JSON for this reason).
+- **Organization scoping:** `organization_id` is resolved from the actor's link,
+  never from payloads, never updatable; list endpoints scope to the actor's org
+  (unlinked actors see unlinked rows). `UserListUseCase` additionally accepts
+  `filter[org_scope]=actor` for pickers.
+- **Soft delete** everywhere (`deleted_at`); master-data names are unique per
+  organization (partial unique index with `NULLS NOT DISTINCT` + 409 guards).
+
+## Sales module notes
+
+- Leads board (`LeadBoard`) fetches statuses + leads independently
+  (`Promise.allSettled`) and degrades per-panel; drag-and-drop moves status.
+- Lead `status` is a free-form string backed by lead-status master data.
+- `POST /base/api/v1/tools/upload-file` takes
+  `{filename, content_type?, data (base64)}` → Tencent COS, returns
+  `{key, url, content_type, size, etag}` (permission `base:tools:upload:upload`).
+- UI smoke scripts live outside the repo: `/tmp/opencode/sales-smoke.mjs`
+  (`SMOKE_ENCRYPTED=1` for the real exchange), `sales-ui-smoke.mjs`
+  (`BASE_URL=` override). Test reports accumulate in `testsuite/` (gitignored).
+
+## Known issues
+
+- `npm run build` type-checking fails on the generated `.next/dev` route-type
+  validator (flags untouched route/layout files). `tsc --noEmit` on source is
+  clean; builds have been produced with a temporary `ignoreBuildErrors` (always
+  reverted afterwards — never commit that flag).
+- Never delete `.next/` while the server runs (`next start` crash-loops);
+  stop pm2 first.
+- `testsuite/` is gitignored by design; `app/sass` and `app/sales` are separate
+  repos (commit + push inside each, then update the parent pointer, submodule first).

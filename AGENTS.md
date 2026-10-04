@@ -7,3 +7,63 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# VortexGin — agent guide
+
+Next.js 16.3.4 (App Router) · React 19 · Sequelize 6 + Postgres · Joi · Tailwind 4.
+Submodules (separate repos, commit inside each first, then the parent pointer):
+`app/sass` (`my-sass-library`), `app/sales` (`my-sales-library`).
+
+## Breaking framework conventions (verified in tree)
+
+- Root layout uses global `LayoutProps<'/'>` (no import). Route/page params are
+  `params: Promise<{...}>` — always `await params`. Keep this shape in every new
+  route, page, and layout; the generated `.next/dev` route validator rejects
+  anything else (and is currently failing repo-wide — see Known issues).
+- `export const runtime = "nodejs"` on every API route (Sequelize needs it).
+
+## Where things live
+
+- Entity slice: `app/<domain>/models/` (`toApi()` + lazy `getXModel()` factory,
+  `underscored: true`, `timestamps: false`) → `useCases/<entity>/`
+  (`List/Get/Create/Update/Delete` extending `@/useCases/BaseUseCase`: Joi in
+  `preExec`, `recordActivityLog`/`settleTransaction` in `postExec`) →
+  `api/[version]/<entities>/route.ts` + `[uuid]/route.ts`
+  (`withAuthorization(handler, [...codes])`, `ok()`/`fail()` envelopes) →
+  `components/<entity>/` (`*Table` generic `Table`, `*Form`, `Delete*Button`) →
+  `views/<entities>/` (server pages: `requireSession()` + `AuthComponent` +
+  `AccessDenied`) + `paths.ts`.
+- Shared: `libraries/` (Auth, Permissions, EncryptedRoute/Fetch, Encryption,
+  Http, cos, mail), `useCases/BaseUseCase.ts`,
+  `useCases/TransactionUseCase.ts` (billing baseline: `checkTransaction` /
+  `settleTransaction`), `exceptions/` (typed errors with HTTP `.code`),
+  `database/sequelize.ts` (lazy singleton), `migrations/` (sequelize-cli),
+  `database/seed-master-data.sql` (idempotent `ON CONFLICT DO NOTHING` + role
+  grants; rerun freely).
+
+## Rules that bite
+
+- `withEncryption` only passes JSON `{iv,data}` envelopes — no multipart bodies.
+  File upload = base64-inside-JSON (`tools/upload-file` pattern).
+- `organization_id` is resolved from the actor, never from payloads, never
+  updatable. Joi schemas reject unknown keys by default — keep it that way.
+- Soft delete (`deleted_at`) on everything; master-data names unique per org
+  (partial unique index `NULLS NOT DISTINCT` + `DuplicateEntityException` 409
+  on create/rename, plus `UniqueConstraintError` mapping for races).
+- Client dropdowns that depend on other entities must degrade independently
+  (`Promise.allSettled`, per-panel errors) — never blank the primary view
+  because a sibling fetch failed (see testsuite F-02).
+- Modals: portal to `document.body` — ancestor cards use `backdrop-blur`, which
+  traps `position: fixed` overlays (see LeadActivityModal).
+
+## Operations
+
+- `dotenv` is NOT installed: `export DATABASE_URL=...` before `sequelize-cli`;
+  never `source .env` (line 5 breaks bash parsing).
+- PM2 process is `my-next-app` (`next start -p 3000`). Never `rm -rf .next`
+  while it runs. After source changes: temp `ignoreBuildErrors` → build →
+  revert flag → `pm2 restart my-next-app` (see README Known issues).
+- Smoke tests: `/tmp/opencode/sales-smoke.mjs` (`SMOKE_ENCRYPTED=1`,
+  `BASE_URL=`), `sales-ui-smoke.mjs`. Reports in `testsuite/` (gitignored).
+- Login for probes: `admin@vortexgin.com` / `admin123` (no org link).
+  Clean up probe rows via the API afterwards.
