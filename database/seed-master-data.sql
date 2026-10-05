@@ -1296,6 +1296,147 @@ VALUES
         NULL
     ) ON CONFLICT DO NOTHING;
 
+--
+-- Product module actions (entity CRUD + menu gates)
+--
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    ('fc5ad967-fcc8-422b-8dc8-c2c901648596', 'base:menu:product:product', 'Access for product module', 'active', NOW (), NOW (), NULL),
+    ('a267aa4e-70cd-46cf-af84-721ac2c6853b', 'base:menu:product:products', 'Access for product products module', 'active', NOW (), NOW (), NULL),
+    ('84e74b94-6090-454d-87a9-3f4d9da5921e', 'base:menu:product:variants', 'Access for product variants module', 'active', NOW (), NOW (), NULL),
+    ('2c09364b-7104-44fb-a928-6db55011e8d8', 'base:menu:product:categories', 'Access for product categories module', 'active', NOW (), NOW (), NULL),
+    ('8d76e748-0466-44ba-93b2-a67813259e4a', 'base:menu:product:units', 'Access for product units module', 'active', NOW (), NOW (), NULL),
+    ('a68c6060-1d9c-4697-b63f-d450e0ca2e14', 'product:product:list:list', 'Access for list product', 'active', NOW (), NOW (), NULL),
+    ('63ab9dd2-c52c-4ade-a505-058ec362fa78', 'product:product:create:create', 'Access for create product', 'active', NOW (), NOW (), NULL),
+    ('ace04891-6209-4559-b908-189f5d48f4c2', 'product:product:view:detail', 'Access for view detail product', 'active', NOW (), NOW (), NULL),
+    ('fbe4c570-cba5-4002-93d8-d48052ddd224', 'product:product:view:update', 'Access for update detail product', 'active', NOW (), NOW (), NULL),
+    ('437dbb19-bc0f-4da6-8b86-dfaea625cb26', 'product:product:view:delete', 'Access for delete product', 'active', NOW (), NOW (), NULL),
+    ('63962cd8-7cae-4591-8786-fc4d2e3c652b', 'product:variant:list:list', 'Access for list product variant', 'active', NOW (), NOW (), NULL),
+    ('6525a33a-2f3e-4713-910e-ea13665619a2', 'product:variant:create:create', 'Access for create product variant', 'active', NOW (), NOW (), NULL),
+    ('a741e331-eb7c-4b6d-b6fb-ccf48e7545a2', 'product:variant:view:detail', 'Access for view detail product variant', 'active', NOW (), NOW (), NULL),
+    ('f5261301-ab73-4f7b-a861-9077beb558cf', 'product:variant:view:update', 'Access for update detail product variant', 'active', NOW (), NOW (), NULL),
+    ('36721e76-e771-4afd-a650-918fd1672491', 'product:variant:view:delete', 'Access for delete product variant', 'active', NOW (), NOW (), NULL),
+    ('94a6c47d-c40f-4dc5-8a95-b1c8cde5a15b', 'product:category:list:list', 'Access for list product category', 'active', NOW (), NOW (), NULL),
+    ('e11357df-3eaf-4345-bde9-2ea691fb1202', 'product:category:create:create', 'Access for create product category', 'active', NOW (), NOW (), NULL),
+    ('ead93d19-0e10-4753-b229-b8bd2c15789d', 'product:category:view:detail', 'Access for view detail product category', 'active', NOW (), NOW (), NULL),
+    ('654da32f-24e1-4816-805e-ed8f017e54c9', 'product:category:view:update', 'Access for update detail product category', 'active', NOW (), NOW (), NULL),
+    ('b4888b81-e1cd-4e6b-9844-0f60469ddedf', 'product:category:view:delete', 'Access for delete product category', 'active', NOW (), NOW (), NULL),
+    ('a0b37e26-713d-421c-950d-5ceec1713f3c', 'product:unit:list:list', 'Access for list product unit', 'active', NOW (), NOW (), NULL),
+    ('6419057f-faa1-4c72-ba23-a1808f7d3ffb', 'product:unit:create:create', 'Access for create product unit', 'active', NOW (), NOW (), NULL),
+    ('d793e8f0-58db-4694-a217-3208d0ea3d47', 'product:unit:view:detail', 'Access for view detail product unit', 'active', NOW (), NOW (), NULL),
+    ('8e1972b4-cd38-4a80-bf2f-c228b7677460', 'product:unit:view:update', 'Access for update detail product unit', 'active', NOW (), NOW (), NULL),
+    ('814c74b5-3743-49f3-962d-e2d2481719ef', 'product:unit:view:delete', 'Access for delete product unit', 'active', NOW (), NOW (), NULL),
+    ('dba0d4e2-77b9-421f-813d-e595442e7006', 'product:metadata:list:list', 'Access for list product metadata', 'active', NOW (), NOW (), NULL),
+    ('71cfe599-3248-4e7c-965e-2131fc6c868e', 'product:metadata:create:create', 'Access for create product metadata', 'active', NOW (), NOW (), NULL),
+    ('02a92741-12c7-49d7-a267-f43cd9333a2b', 'product:metadata:view:detail', 'Access for view detail product metadata', 'active', NOW (), NOW (), NULL),
+    ('1d053659-9eb4-4d0e-a132-8ab75d7c8adc', 'product:metadata:view:update', 'Access for update detail product metadata', 'active', NOW (), NOW (), NULL),
+    ('aad8e495-2f4c-4a56-a8f7-39ebc65cae0a', 'product:metadata:view:delete', 'Access for delete product metadata', 'active', NOW (), NOW (), NULL),
+    ('6a1acb86-ccee-4a81-9a74-a880aa57b36b', 'product:metadata-field:list:list', 'Access for list product metadata field', 'active', NOW (), NOW (), NULL),
+    ('039a0883-15a1-4fb2-bad3-3b62981df284', 'product:metadata-field:create:create', 'Access for create product metadata field', 'active', NOW (), NOW (), NULL),
+    ('85702d43-8391-4b16-8650-1ed682155fb8', 'product:metadata-field:view:detail', 'Access for view detail product metadata field', 'active', NOW (), NOW (), NULL),
+    ('ed8dc012-dd38-419f-b4eb-367e4b059fc8', 'product:metadata-field:view:update', 'Access for update detail product metadata field', 'active', NOW (), NOW (), NULL),
+    ('dcfbb12e-999d-415f-9cc6-fbbd65517ed0', 'product:metadata-field:view:delete', 'Access for delete product metadata field', 'active', NOW (), NOW (), NULL)
+    ON CONFLICT DO NOTHING;
+
+--
+-- Product module menus
+--
+INSERT INTO
+    public.base_menus (
+        uuid,
+        icon,
+        parent,
+        menu,
+        action_id,
+        description,
+        redirection,
+        status,
+        created_at,
+        updated_at,
+        deleted_at,
+        weight
+    )
+VALUES
+    (
+        '8593ca53-80cd-418e-a615-87ba04e56ab7',
+        '',
+        NULL,
+        'Product',
+        'fc5ad967-fcc8-422b-8dc8-c2c901648596',
+        'Access to product settings',
+        '#',
+        'active',
+        NOW (),
+        NOW (),
+        NULL,
+        0
+    ),
+    (
+        'd03a54cb-be59-485f-8189-cc2fcc492e0b',
+        '-',
+        '8593ca53-80cd-418e-a615-87ba04e56ab7',
+        'Products',
+        'a267aa4e-70cd-46cf-af84-721ac2c6853b',
+        'Access to products settings',
+        '/product/views/products',
+        'active',
+        NOW (),
+        NOW (),
+        NULL,
+        0
+    ),
+    (
+        '39838bc4-a73a-406f-a6fa-ea4fbd3e648e',
+        '-',
+        '8593ca53-80cd-418e-a615-87ba04e56ab7',
+        'Variants',
+        '84e74b94-6090-454d-87a9-3f4d9da5921e',
+        'Access to variants settings',
+        '/product/views/product-variants',
+        'active',
+        NOW (),
+        NOW (),
+        NULL,
+        1
+    ),
+    (
+        'd340758d-2d56-47a6-a355-a5ef386ad5b4',
+        '-',
+        '8593ca53-80cd-418e-a615-87ba04e56ab7',
+        'Categories',
+        '2c09364b-7104-44fb-a928-6db55011e8d8',
+        'Access to categories settings',
+        '/product/views/product-categories',
+        'active',
+        NOW (),
+        NOW (),
+        NULL,
+        2
+    ),
+    (
+        '642b5f83-751b-450b-b514-567863b75eb4',
+        '-',
+        '8593ca53-80cd-418e-a615-87ba04e56ab7',
+        'Units',
+        '8d76e748-0466-44ba-93b2-a67813259e4a',
+        'Access to units settings',
+        '/product/views/product-units',
+        'active',
+        NOW (),
+        NOW (),
+        NULL,
+        3
+    ) ON CONFLICT DO NOTHING;
+
 INSERT INTO
     public.base_actions (
         uuid,
@@ -1968,7 +2109,42 @@ WHERE
         'sales:lead-activity:view:delete',
         'base:menu:sales:lead-status',
         'base:menu:sales:lead-metadata-field',
-        'base:tools:upload:upload'
+        'base:tools:upload:upload',
+        'base:menu:product:product',
+        'base:menu:product:products',
+        'base:menu:product:variants',
+        'base:menu:product:categories',
+        'base:menu:product:units',
+        'product:product:list:list',
+        'product:product:create:create',
+        'product:product:view:detail',
+        'product:product:view:update',
+        'product:product:view:delete',
+        'product:variant:list:list',
+        'product:variant:create:create',
+        'product:variant:view:detail',
+        'product:variant:view:update',
+        'product:variant:view:delete',
+        'product:category:list:list',
+        'product:category:create:create',
+        'product:category:view:detail',
+        'product:category:view:update',
+        'product:category:view:delete',
+        'product:unit:list:list',
+        'product:unit:create:create',
+        'product:unit:view:detail',
+        'product:unit:view:update',
+        'product:unit:view:delete',
+        'product:metadata:list:list',
+        'product:metadata:create:create',
+        'product:metadata:view:detail',
+        'product:metadata:view:update',
+        'product:metadata:view:delete',
+        'product:metadata-field:list:list',
+        'product:metadata-field:create:create',
+        'product:metadata-field:view:detail',
+        'product:metadata-field:view:update',
+        'product:metadata-field:view:delete'
     ) ON CONFLICT DO NOTHING;
 
 --
@@ -2069,7 +2245,42 @@ WHERE
         'sales:lead-activity:view:delete',
         'base:menu:sales:lead-status',
         'base:menu:sales:lead-metadata-field',
-        'base:tools:upload:upload'
+        'base:tools:upload:upload',
+        'base:menu:product:product',
+        'base:menu:product:products',
+        'base:menu:product:variants',
+        'base:menu:product:categories',
+        'base:menu:product:units',
+        'product:product:list:list',
+        'product:product:create:create',
+        'product:product:view:detail',
+        'product:product:view:update',
+        'product:product:view:delete',
+        'product:variant:list:list',
+        'product:variant:create:create',
+        'product:variant:view:detail',
+        'product:variant:view:update',
+        'product:variant:view:delete',
+        'product:category:list:list',
+        'product:category:create:create',
+        'product:category:view:detail',
+        'product:category:view:update',
+        'product:category:view:delete',
+        'product:unit:list:list',
+        'product:unit:create:create',
+        'product:unit:view:detail',
+        'product:unit:view:update',
+        'product:unit:view:delete',
+        'product:metadata:list:list',
+        'product:metadata:create:create',
+        'product:metadata:view:detail',
+        'product:metadata:view:update',
+        'product:metadata:view:delete',
+        'product:metadata-field:list:list',
+        'product:metadata-field:create:create',
+        'product:metadata-field:view:detail',
+        'product:metadata-field:view:update',
+        'product:metadata-field:view:delete'
     ) ON CONFLICT DO NOTHING;
 
 --
