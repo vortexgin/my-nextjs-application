@@ -6,11 +6,9 @@ import { useState, type FormEvent } from "react";
 import { ACTION_LIST_PATH } from "@/app/base/views/actions/paths";
 import type { Action } from "@/app/base/models/ActionModel";
 import { postEncrypted, putEncrypted } from "@/libraries/EncryptedFetch";
+import { SelectField, TextAreaField, TextField } from "@/components/FormField";
 
 const API_PATH = "/base/api/v1/actions";
-
-const inputClass =
-  "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100";
 
 export function ActionForm({
   mode,
@@ -27,6 +25,10 @@ export function ActionForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isPending) {
+      setError("A save is already in progress.");
+      return;
+    }
     setError("");
     setIsPending(true);
 
@@ -68,42 +70,38 @@ export function ActionForm({
         </h1>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Action code</span>
-            <input
-              type="text"
-              name="action"
-              required
-              minLength={2}
-              maxLength={120}
-              defaultValue={initial?.action ?? ""}
-              placeholder="e.g. base:user:create"
-              className={inputClass}
-            />
-            <span className="mt-2 block text-xs text-slate-500">
-              Lowercase letters, numbers, dots, underscores, colons, dashes only.
-            </span>
-          </label>
+          <TextField
+            label="Action code"
+            type="text"
+            name="action"
+            required
+            minLength={2}
+            maxLength={120}
+            pattern="[a-z0-9._:-]{2,120}"
+            title="Lowercase letters, numbers, dots, underscores, colons, dashes only."
+            defaultValue={initial?.action ?? ""}
+            placeholder="e.g. base:user:create"
+            hint="Lowercase letters, numbers, dots, underscores, colons, dashes only."
+          />
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Description</span>
-            <textarea
-              name="description"
-              rows={3}
-              maxLength={255}
-              defaultValue={initial?.description ?? ""}
-              placeholder="What this action grants."
-              className={inputClass}
-            />
-          </label>
+          <TextAreaField
+            label="Description"
+            name="description"
+            rows={3}
+            maxLength={255}
+            defaultValue={initial?.description ?? ""}
+            placeholder="What this action grants."
+          />
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Status</span>
-            <select name="status" defaultValue={initial?.status ?? "active"} className={inputClass}>
-              <option value="active">active</option>
-              <option value="inactive">inactive</option>
-            </select>
-          </label>
+          <SelectField
+            label="Status"
+            name="status"
+            defaultValue={initial?.status ?? "active"}
+            options={[
+              { value: "active", label: "active" },
+              { value: "inactive", label: "inactive" },
+            ]}
+          />
 
           <label className="flex items-center gap-3">
             <input

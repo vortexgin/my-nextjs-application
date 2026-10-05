@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import type { LoginResult } from "@/app/sso/useCases/LoginUseCase";
 import { postEncrypted } from "@/libraries/EncryptedFetch";
+import { TextField } from "@/components/FormField";
 import { signInSchema, type SignInFormState } from "@/app/sso/components/forms/SignInSchema";
 
 type SignInFormErrors = Partial<Record<keyof SignInFormState, string>>;
@@ -18,6 +19,7 @@ export function SignInForm() {
   const [errors, setErrors] = useState<SignInFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [submitKind, setSubmitKind] = useState<"success" | "error" | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
 
   const updateField = (event: ChangeEvent<HTMLInputElement>) => {
@@ -25,14 +27,15 @@ export function SignInForm() {
     setForm((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: undefined }));
     if (submitMessage) setSubmitMessage("");
+    if (submitKind) setSubmitKind(null);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    // Every validated key (email, password) is declared in signInSchema.
     const { error, value } = signInSchema.validate(form, {
       abortEarly: false,
-      allowUnknown: true,
     });
 
     if (error) {
@@ -45,12 +48,14 @@ export function SignInForm() {
 
       setErrors(nextErrors);
       setSubmitMessage("Please correct the highlighted fields.");
+      setSubmitKind("error");
       return;
     }
 
     setErrors({});
     setIsSubmitting(true);
     setSubmitMessage("");
+    setSubmitKind(null);
 
     try {
       const envelope = await postEncrypted<LoginResult>("/sso/api/v1/login", {
@@ -61,12 +66,14 @@ export function SignInForm() {
 
       if (!envelope.success) {
         setSubmitMessage(envelope.message || "Sign in failed.");
+        setSubmitKind("error");
         return;
       }
 
       router.push("/dashboard");
     } catch {
       setSubmitMessage("Something went wrong. Please try again.");
+      setSubmitKind("error");
     } finally {
       setIsSubmitting(false);
     }
@@ -92,43 +99,39 @@ export function SignInForm() {
         </div>
 
         <form className="space-y-5" onSubmit={handleSubmit} noValidate>
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Email address</span>
-            <input
+          <div>
+            <TextField
+              label="Email address"
               type="email"
               name="email"
               value={form.email}
               onChange={updateField}
               placeholder="name@company.com"
-              aria-invalid={Boolean(errors.email)}
-              className={`w-full rounded-xl border bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:ring-4 ${errors.email
-                  ? "border-red-300 focus:border-red-500 focus:ring-red-100"
-                  : "border-slate-200 focus:border-blue-500 focus:ring-blue-100"
-                }`}
+              error={errors.email}
+              className={
+                errors.email
+                  ? "w-full rounded-xl border border-red-300 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-100"
+                  : undefined
+              }
             />
-            {errors.email ? (
-              <span className="mt-2 block text-sm text-red-600">{errors.email}</span>
-            ) : null}
-          </label>
+          </div>
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Password</span>
-            <input
+          <div>
+            <TextField
+              label="Password"
               type="password"
               name="password"
               value={form.password}
               onChange={updateField}
               placeholder="Enter your password"
-              aria-invalid={Boolean(errors.password)}
-              className={`w-full rounded-xl border bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:ring-4 ${errors.password
-                  ? "border-red-300 focus:border-red-500 focus:ring-red-100"
-                  : "border-slate-200 focus:border-blue-500 focus:ring-blue-100"
-                }`}
+              error={errors.password}
+              className={
+                errors.password
+                  ? "w-full rounded-xl border border-red-300 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-100"
+                  : undefined
+              }
             />
-            {errors.password ? (
-              <span className="mt-2 block text-sm text-red-600">{errors.password}</span>
-            ) : null}
-          </label>
+          </div>
 
           <div className="flex items-center justify-between gap-3 text-sm">
             <label className="flex items-center gap-2 text-slate-600">
@@ -153,7 +156,14 @@ export function SignInForm() {
             {isSubmitting ? "Signing in..." : "Sign in"}
           </button>
 
-          {submitMessage ? <p className="text-sm text-slate-600">{submitMessage}</p> : null}
+          {submitMessage ? (
+            <p
+              role={submitKind === "success" ? "status" : "alert"}
+              className={submitKind === "success" ? "text-sm text-green-700" : "text-sm text-red-600"}
+            >
+              {submitMessage}
+            </p>
+          ) : null}
         </form>
 
         <div className="mt-8 flex items-center gap-3 text-sm text-slate-500">

@@ -7,6 +7,7 @@ import { MENU_LIST_PATH } from "@/app/base/views/menus/paths";
 import type { Action } from "@/app/base/models/ActionModel";
 import type { Menu } from "@/app/base/models/MenuModel";
 import { getEncrypted, postEncrypted, putEncrypted } from "@/libraries/EncryptedFetch";
+import { SelectField, TextAreaField, TextField } from "@/components/FormField";
 
 const API_PATH = "/base/api/v1/menus";
 const ACTION_API_PATH = "/base/api/v1/actions";
@@ -69,9 +70,6 @@ function orderParentOptions(menus: Menu[], uuid?: string): Option[] {
   return ordered;
 }
 
-const inputClass =
-  "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100";
-
 export function MenuForm({
   mode,
   uuid,
@@ -90,7 +88,8 @@ export function MenuForm({
   const [actionOptions, setActionOptions] = useState<Option[]>([]);
   const [parentOptions, setParentOptions] = useState<Option[]>([]);
   const [actionId, setActionId] = useState(initial?.action_id ?? "");
-  const [parentId, setParentId] = useState(initial?.parent ?? "");
+  const initialParent: string | null = initial?.parent ?? null;
+  const [parentId, setParentId] = useState(initialParent ?? "");
 
   // Keep current values selectable even when missing from fetched lists.
   const actionItems =
@@ -98,38 +97,50 @@ export function MenuForm({
       ? [{ uuid: initial.action_id, label: initial.action_id }, ...actionOptions]
       : actionOptions;
   const parentItems =
-    initial?.parent && !parentOptions.some((option) => option.uuid === initial.parent)
-      ? [{ uuid: initial.parent as string, label: initial.parent as string }, ...parentOptions]
+    initialParent && !parentOptions.some((option) => option.uuid === initialParent)
+      ? [{ uuid: initialParent, label: initialParent }, ...parentOptions]
       : parentOptions;
   const [optionsLoading, setOptionsLoading] = useState(true);
-  const [optionsError, setOptionsError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [menuError, setMenuError] = useState("");
 
   useEffect(() => {
     let active = true;
     (async () => {
       try {
-        const [actionsEnvelope, menusEnvelope] = await Promise.all([
+        const [actionsResult, menusResult] = await Promise.allSettled([
           getEncrypted<Action[]>(`${ACTION_API_PATH}?sortProperty=action&sortDirection=asc&limit=100`),
           getEncrypted<Menu[]>(`${API_PATH}?sortProperty=weight&sortDirection=asc&limit=100`),
         ]);
         if (!active) {
           return;
         }
-        if (!actionsEnvelope.success) {
-          setOptionsError(actionsEnvelope.message || "Failed to load actions.");
-          return;
+        if (actionsResult.status === "rejected" || !actionsResult.value.success) {
+          setActionError(
+            actionsResult.status === "rejected"
+              ? "Failed to load actions. Please try again."
+              : actionsResult.value.message || "Failed to load actions.",
+          );
+        } else {
+          setActionError("");
+          setActionOptions(
+            (actionsResult.value.data ?? []).map((action) => ({ uuid: action.uuid, label: action.action })),
+          );
         }
-        if (!menusEnvelope.success) {
-          setOptionsError(menusEnvelope.message || "Failed to load menus.");
-          return;
+        if (menusResult.status === "rejected" || !menusResult.value.success) {
+          setMenuError(
+            menusResult.status === "rejected"
+              ? "Failed to load menus. Please try again."
+              : menusResult.value.message || "Failed to load menus.",
+          );
+        } else {
+          setMenuError("");
+          setParentOptions(orderParentOptions(menusResult.value.data ?? [], uuid));
         }
-        setActionOptions(
-          (actionsEnvelope.data ?? []).map((action) => ({ uuid: action.uuid, label: action.action })),
-        );
-        setParentOptions(orderParentOptions(menusEnvelope.data ?? [], uuid));
       } catch {
         if (active) {
-          setOptionsError("Failed to load dropdown options. Please try again.");
+          setActionError((current) => current || "Failed to load dropdown options. Please try again.");
+          setMenuError((current) => current || "Failed to load dropdown options. Please try again.");
         }
       } finally {
         if (active) {
@@ -144,6 +155,12 @@ export function MenuForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isPending || optionsLoading) {
+      setError(
+        isPending ? "A save is already in progress." : "Dropdown options are still loading. Please wait.",
+      );
+      return;
+    }
     setError("");
     setIsPending(true);
 
@@ -192,131 +209,104 @@ export function MenuForm({
         </h1>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Menu name</span>
-            <input
-              type="text"
-              name="menu"
-              required
-              minLength={2}
-              maxLength={120}
-              defaultValue={initial?.menu ?? ""}
-              placeholder="e.g. User Management"
-              className={inputClass}
-            />
-          </label>
+          <TextField
+            label="Menu name"
+            type="text"
+            name="menu"
+            required
+            minLength={2}
+            maxLength={120}
+            defaultValue={initial?.menu ?? ""}
+            placeholder="e.g. User Management"
+          />
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">Icon</span>
-              <input
-                type="text"
-                name="icon"
-                required
-                maxLength={255}
-                defaultValue={initial?.icon ?? ""}
-                placeholder="e.g. ○"
-                className={inputClass}
-              />
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">Weight</span>
-              <input
-                type="number"
-                name="weight"
-                min={0}
-                step={1}
-                defaultValue={initial?.weight ?? 0}
-                placeholder="0"
-                className={inputClass}
-              />
-            </label>
+            <TextField
+              label="Icon"
+              type="text"
+              name="icon"
+              required
+              maxLength={255}
+              defaultValue={initial?.icon ?? ""}
+              placeholder="e.g. ○"
+            />
+            <TextField
+              label="Weight"
+              type="number"
+              name="weight"
+              min={0}
+              step={1}
+              defaultValue={initial?.weight ?? 0}
+              placeholder="0"
+            />
           </div>
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Redirection</span>
-            <input
-              type="text"
-              name="redirection"
-              required
-              maxLength={500}
-              defaultValue={initial?.redirection ?? ""}
-              placeholder="e.g. /base/views/users"
-              className={inputClass}
-            />
-          </label>
+          <TextField
+            label="Redirection"
+            type="text"
+            name="redirection"
+            required
+            maxLength={500}
+            defaultValue={initial?.redirection ?? ""}
+            placeholder="e.g. /base/views/users"
+          />
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">Action</span>
-              <select
+            <div>
+              <SelectField
+                label="Action"
                 name="action_id"
                 required
                 value={actionId}
                 onChange={(event) => setActionId(event.target.value)}
                 disabled={optionsLoading}
-                className={inputClass}
-              >
-                <option value="">
-                  {optionsLoading ? "Loading actions..." : "Select gating action"}
-                </option>
-                {actionItems.map((option) => (
-                  <option key={option.uuid} value={option.uuid}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <span className="mt-2 block text-xs text-slate-500">
-                Permission code required to see this menu.
-              </span>
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">Parent</span>
-              <select
+                placeholder={optionsLoading ? "Loading actions..." : "Select gating action"}
+                options={actionItems.map((option) => ({ value: option.uuid, label: option.label }))}
+                hint="Permission code required to see this menu."
+              />
+              {actionError ? (
+                <p role="alert" className="mt-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {actionError}
+                </p>
+              ) : null}
+            </div>
+            <div>
+              <SelectField
+                label="Parent"
                 name="parent"
                 value={parentId}
                 onChange={(event) => setParentId(event.target.value)}
                 disabled={optionsLoading}
-                className={inputClass}
-              >
-                <option value="">— Root menu —</option>
-                {parentItems.map((option) => (
-                  <option key={option.uuid} value={option.uuid}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <span className="mt-2 block text-xs text-slate-500">
-                Root menu when empty.
-              </span>
-            </label>
+                placeholder="— Root menu —"
+                options={parentItems.map((option) => ({ value: option.uuid, label: option.label }))}
+                hint="Root menu when empty."
+              />
+              {menuError ? (
+                <p role="alert" className="mt-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {menuError}
+                </p>
+              ) : null}
+            </div>
           </div>
 
-          {optionsError ? (
-            <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {optionsError}
-            </p>
-          ) : null}
+          <TextAreaField
+            label="Description"
+            name="description"
+            rows={3}
+            maxLength={255}
+            defaultValue={initial?.description ?? ""}
+            placeholder="What this menu is for."
+          />
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Description</span>
-            <textarea
-              name="description"
-              rows={3}
-              maxLength={255}
-              defaultValue={initial?.description ?? ""}
-              placeholder="What this menu is for."
-              className={inputClass}
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Status</span>
-            <select name="status" defaultValue={initial?.status ?? "active"} className={inputClass}>
-              <option value="active">active</option>
-              <option value="inactive">inactive</option>
-            </select>
-          </label>
+          <SelectField
+            label="Status"
+            name="status"
+            defaultValue={initial?.status ?? "active"}
+            options={[
+              { value: "active", label: "active" },
+              { value: "inactive", label: "inactive" },
+            ]}
+          />
 
           {error ? (
             <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -327,7 +317,7 @@ export function MenuForm({
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="submit"
-              disabled={isPending}
+              disabled={isPending || optionsLoading}
               className="inline-flex items-center justify-center rounded-xl bg-slate-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500"
             >
               {isPending ? "Saving..." : mode === "create" ? "Create menu" : "Save changes"}

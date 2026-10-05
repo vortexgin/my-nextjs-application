@@ -4,6 +4,7 @@ import { useState, type ChangeEvent, type FormEvent } from "react";
 import type { User } from "@/app/base/models/UserModel";
 import { logout } from "@/app/dashboard/components/actions";
 import { putEncrypted } from "@/libraries/EncryptedFetch";
+import { TextField } from "@/components/FormField";
 import { updateProfileSchema, type UpdateProfileFormState } from "@/app/dashboard/components/forms/UpdateProfileSchema";
 
 type UpdateProfileFormErrors = Partial<Record<keyof UpdateProfileFormState, string>>;
@@ -17,20 +18,22 @@ export function UpdateProfileForm({ user }: { user: Pick<User, "uuid" | "name" |
   const [errors, setErrors] = useState<UpdateProfileFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [submitKind, setSubmitKind] = useState<"success" | "error" | null>(null);
 
   const updateField = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: undefined }));
     if (submitMessage) setSubmitMessage("");
+    if (submitKind) setSubmitKind(null);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    // Every validated key (name, email, phone_number) is declared in updateProfileSchema.
     const { error, value } = updateProfileSchema.validate(form, {
       abortEarly: false,
-      allowUnknown: true,
     });
 
     if (error) {
@@ -43,12 +46,14 @@ export function UpdateProfileForm({ user }: { user: Pick<User, "uuid" | "name" |
 
       setErrors(nextErrors);
       setSubmitMessage("Please correct the highlighted fields.");
+      setSubmitKind("error");
       return;
     }
 
     setErrors({});
     setIsSubmitting(true);
     setSubmitMessage("");
+    setSubmitKind(null);
 
     try {
       const envelope = await putEncrypted<User>(`/base/api/v1/users/${user.uuid}`, {
@@ -59,79 +64,83 @@ export function UpdateProfileForm({ user }: { user: Pick<User, "uuid" | "name" |
 
       if (!envelope.success) {
         setSubmitMessage(envelope.message || "Update failed.");
+        setSubmitKind("error");
         return;
       }
 
-      setForm({
-        name: envelope.data.name,
-        email: envelope.data.email,
-        phone_number: envelope.data.phone_number,
-      });
+      // envelope.data is typed non-nullable but arrives null on some failure paths.
+      const updated = envelope.data;
+      if (updated) {
+        setForm({
+          name: updated.name,
+          email: updated.email,
+          phone_number: updated.phone_number,
+        });
+      }
       setSubmitMessage("Profile changed. Signing out...");
+      setSubmitKind("success");
 
       await logout();
     } catch {
       setSubmitMessage("Something went wrong. Please try again.");
+      setSubmitKind("error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const inputClass = (invalid: boolean) =>
-    `w-full rounded-xl border bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:ring-4 ${invalid
-      ? "border-red-300 focus:border-red-500 focus:ring-red-100"
-      : "border-slate-200 focus:border-blue-500 focus:ring-blue-100"
-    }`;
-
   return (
     <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
-      <label className="block">
-        <span className="mb-2 block text-sm font-medium text-slate-700">Name</span>
-        <input
+      <div>
+        <TextField
+          label="Name"
           type="text"
           name="name"
           value={form.name}
           onChange={updateField}
           placeholder="Your name"
-          aria-invalid={Boolean(errors.name)}
-          className={inputClass(Boolean(errors.name))}
+          error={errors.name}
+          className={
+            errors.name
+              ? "w-full rounded-xl border border-red-300 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-100"
+              : undefined
+          }
         />
-        {errors.name ? (
-          <span className="mt-2 block text-sm text-red-600">{errors.name}</span>
-        ) : null}
-      </label>
+      </div>
 
-      <label className="block">
-        <span className="mb-2 block text-sm font-medium text-slate-700">Email address</span>
-        <input
+      <div>
+        <TextField
+          label="Email address"
           type="email"
           name="email"
           value={form.email}
           onChange={updateField}
           placeholder="name@company.com"
-          aria-invalid={Boolean(errors.email)}
-          className={inputClass(Boolean(errors.email))}
+          error={errors.email}
+          className={
+            errors.email
+              ? "w-full rounded-xl border border-red-300 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-100"
+              : undefined
+          }
         />
-        {errors.email ? (
-          <span className="mt-2 block text-sm text-red-600">{errors.email}</span>
-        ) : null}
-      </label>
+      </div>
 
-      <label className="block">
-        <span className="mb-2 block text-sm font-medium text-slate-700">Phone number</span>
-        <input
+      <div>
+        <TextField
+          label="Phone number"
           type="tel"
           name="phone_number"
           value={form.phone_number}
           onChange={updateField}
           placeholder="+15550001111"
-          aria-invalid={Boolean(errors.phone_number)}
-          className={inputClass(Boolean(errors.phone_number))}
+          error={errors.phone_number}
+          className={
+            errors.phone_number
+              ? "w-full rounded-xl border border-red-300 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-100"
+              : undefined
+          }
         />
-        {errors.phone_number ? (
-          <span className="mt-2 block text-sm text-red-600">{errors.phone_number}</span>
-        ) : null}
-      </label>
+      </div>
 
       <button
         type="submit"
@@ -141,7 +150,14 @@ export function UpdateProfileForm({ user }: { user: Pick<User, "uuid" | "name" |
         {isSubmitting ? "Saving..." : "Save changes"}
       </button>
 
-      {submitMessage ? <p className="text-sm text-slate-600">{submitMessage}</p> : null}
+      {submitMessage ? (
+        <p
+          role={submitKind === "success" ? "status" : "alert"}
+          className={submitKind === "success" ? "text-sm text-green-700" : "text-sm text-red-600"}
+        >
+          {submitMessage}
+        </p>
+      ) : null}
     </form>
   );
 }

@@ -4,6 +4,7 @@ import { useState, type ChangeEvent, type FormEvent } from "react";
 import type { LoginResult } from "@/app/sso/useCases/LoginUseCase";
 import type { User } from "@/app/base/models/UserModel";
 import { postEncrypted, putEncrypted } from "@/libraries/EncryptedFetch";
+import { TextField } from "@/components/FormField";
 import { changePasswordSchema, type ChangePasswordFormState } from "@/app/sso/components/forms/ChangePasswordSchema";
 
 type ChangePasswordFormErrors = Partial<Record<keyof ChangePasswordFormState, string>>;
@@ -17,20 +18,22 @@ export function ChangePasswordForm({ user }: { user: Pick<User, "uuid" | "email"
   const [errors, setErrors] = useState<ChangePasswordFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [submitKind, setSubmitKind] = useState<"success" | "error" | null>(null);
 
   const updateField = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: undefined }));
     if (submitMessage) setSubmitMessage("");
+    if (submitKind) setSubmitKind(null);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    // Every validated key (old/new/repeat password) is declared in changePasswordSchema.
     const { error, value } = changePasswordSchema.validate(form, {
       abortEarly: false,
-      allowUnknown: true,
     });
 
     if (error) {
@@ -43,14 +46,21 @@ export function ChangePasswordForm({ user }: { user: Pick<User, "uuid" | "email"
 
       setErrors(nextErrors);
       setSubmitMessage("Please correct the highlighted fields.");
+      setSubmitKind("error");
       return;
     }
 
     setErrors({});
     setIsSubmitting(true);
     setSubmitMessage("");
+    setSubmitKind(null);
 
     try {
+      // No side-effect-free password-verify endpoint exists: the update use
+      // case accepts a new password without checking the old one, so the old
+      // password is verified via a login attempt. Tradeoff: each wrong guess
+      // mints a session row + activity-log entry and rotates the session
+      // cookie on success. A dedicated verify endpoint would remove that noise.
       const loginEnvelope = await postEncrypted<LoginResult>("/sso/api/v1/login", {
         email: user.email,
         password: value.oldPassword,
@@ -59,6 +69,7 @@ export function ChangePasswordForm({ user }: { user: Pick<User, "uuid" | "email"
       if (!loginEnvelope.success) {
         setErrors((current) => ({ ...current, oldPassword: "Old password is incorrect." }));
         setSubmitMessage("Old password is incorrect.");
+        setSubmitKind("error");
         return;
       }
 
@@ -68,74 +79,73 @@ export function ChangePasswordForm({ user }: { user: Pick<User, "uuid" | "email"
 
       if (!updateEnvelope.success) {
         setSubmitMessage(updateEnvelope.message || "Update failed.");
+        setSubmitKind("error");
         return;
       }
 
       setForm({ oldPassword: "", newPassword: "", repeatNewPassword: "" });
       setSubmitMessage("Password changed successfully.");
+      setSubmitKind("success");
     } catch {
       setSubmitMessage("Something went wrong. Please try again.");
+      setSubmitKind("error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const inputClass = (invalid: boolean) =>
-    `w-full rounded-xl border bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:ring-4 ${
-      invalid
-        ? "border-red-300 focus:border-red-500 focus:ring-red-100"
-        : "border-slate-200 focus:border-blue-500 focus:ring-blue-100"
-    }`;
-
   return (
     <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
-      <label className="block">
-        <span className="mb-2 block text-sm font-medium text-slate-700">Old password</span>
-        <input
+      <div>
+        <TextField
+          label="Old password"
           type="password"
           name="oldPassword"
           value={form.oldPassword}
           onChange={updateField}
           placeholder="Enter current password"
-          aria-invalid={Boolean(errors.oldPassword)}
-          className={inputClass(Boolean(errors.oldPassword))}
+          error={errors.oldPassword}
+          className={
+            errors.oldPassword
+              ? "w-full rounded-xl border border-red-300 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-100"
+              : undefined
+          }
         />
-        {errors.oldPassword ? (
-          <span className="mt-2 block text-sm text-red-600">{errors.oldPassword}</span>
-        ) : null}
-      </label>
+      </div>
 
-      <label className="block">
-        <span className="mb-2 block text-sm font-medium text-slate-700">New password</span>
-        <input
+      <div>
+        <TextField
+          label="New password"
           type="password"
           name="newPassword"
           value={form.newPassword}
           onChange={updateField}
           placeholder="At least 6 characters"
-          aria-invalid={Boolean(errors.newPassword)}
-          className={inputClass(Boolean(errors.newPassword))}
+          error={errors.newPassword}
+          className={
+            errors.newPassword
+              ? "w-full rounded-xl border border-red-300 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-100"
+              : undefined
+          }
         />
-        {errors.newPassword ? (
-          <span className="mt-2 block text-sm text-red-600">{errors.newPassword}</span>
-        ) : null}
-      </label>
+      </div>
 
-      <label className="block">
-        <span className="mb-2 block text-sm font-medium text-slate-700">Repeat new password</span>
-        <input
+      <div>
+        <TextField
+          label="Repeat new password"
           type="password"
           name="repeatNewPassword"
           value={form.repeatNewPassword}
           onChange={updateField}
           placeholder="Repeat new password"
-          aria-invalid={Boolean(errors.repeatNewPassword)}
-          className={inputClass(Boolean(errors.repeatNewPassword))}
+          error={errors.repeatNewPassword}
+          className={
+            errors.repeatNewPassword
+              ? "w-full rounded-xl border border-red-300 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-100"
+              : undefined
+          }
         />
-        {errors.repeatNewPassword ? (
-          <span className="mt-2 block text-sm text-red-600">{errors.repeatNewPassword}</span>
-        ) : null}
-      </label>
+      </div>
 
       <button
         type="submit"
@@ -145,7 +155,14 @@ export function ChangePasswordForm({ user }: { user: Pick<User, "uuid" | "email"
         {isSubmitting ? "Saving..." : "Change password"}
       </button>
 
-      {submitMessage ? <p className="text-sm text-slate-600">{submitMessage}</p> : null}
+      {submitMessage ? (
+        <p
+          role={submitKind === "success" ? "status" : "alert"}
+          className={submitKind === "success" ? "text-sm text-green-700" : "text-sm text-red-600"}
+        >
+          {submitMessage}
+        </p>
+      ) : null}
     </form>
   );
 }

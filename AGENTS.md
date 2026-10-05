@@ -30,7 +30,8 @@ Submodules (separate repos, commit inside each first, then the parent pointer):
   `preExec`, `recordActivityLog`/`settleTransaction` in `postExec`) →
   `api/[version]/<entities>/route.ts` + `[uuid]/route.ts`
   (`withAuthorization(handler, [...codes])`, `ok()`/`fail()` envelopes) →
-  `components/<entity>/` (`*Table` generic `Table`, `*Form`, `Delete*Button`) →
+  `components/<entity>/` (`*Table` generic `Table`, `*Form` built on the shared
+  `components/FormField.tsx` kit, `Delete*Button`) →
   `views/<entities>/` (server pages: `requireSession()` + `AuthComponent` +
   `AccessDenied`) + `paths.ts`.
 - Shared: `libraries/` (Auth, Permissions, EncryptedRoute/Fetch, Encryption,
@@ -45,6 +46,23 @@ Submodules (separate repos, commit inside each first, then the parent pointer):
 
 - `withEncryption` only passes JSON `{iv,data}` envelopes — no multipart bodies.
   File upload = base64-inside-JSON (`tools/upload-file` pattern).
+  `withAuthorization` 401/403 rejections are plaintext `fail()` by design;
+  `EncryptedFetch` passes them through (`unwrapResponse`) instead of decrypting.
+- Session permissions snapshot at login — after changing grants/seeds, re-login
+  before probing; otherwise 403s mask as client errors.
+- New forms use `components/FormField.tsx` (`TextField` + `action` slot,
+  `TextAreaField`, `SelectField`, `DateField`/`DateTimeField`) and
+  `components/UploadButton.tsx` for file uploads through that slot; field errors via
+  the `error` prop (ids/`aria-describedby` automatic), submit feedback with
+  `role="status"`/`role="alert"`. Auth forms keep `noValidate` (Joi is the
+  authority) with schemas declaring every validated key (no `allowUnknown`).
+- Submit buttons are `disabled={isPending || loading}` with a matching guard in
+  `handleSubmit` — never submit an edit before its option fetches settle
+  (empty `action_ids` wipes relations).
+- Search filters are display-only: build submit payloads from full selection
+  state, never from the filtered view (see testsuite F-01).
+- Lead metadata sync is full-replacement in `LeadUpdateUseCase` postExec:
+  omitted rows are soft-deleted, so clearing a value = deleting the row.
 - `organization_id` is resolved from the actor, never from payloads, never
   updatable. Joi schemas reject unknown keys by default — keep it that way.
 - Soft delete (`deleted_at`) on everything; master-data names unique per org

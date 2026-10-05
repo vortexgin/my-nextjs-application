@@ -66,7 +66,18 @@ pm2 restart my-next-app
   (`AuthComponent`). Sidebar menus are gated by `base:menu:*` codes.
 - **Encrypted transport:** clients handshake `GET /base/api/v1/public-key`, send
   `x-key-exchange` + `{iv,data}` JSON envelopes; `x-app-verbose: 1` bypasses for
-  debugging (file uploads use base64-inside-JSON for this reason).
+  debugging (file uploads use base64-inside-JSON for this reason). Auth-layer
+  rejections (401/403 from `withAuthorization`) are plaintext `fail()` envelopes
+  by design — `EncryptedFetch` passes them through instead of decrypting, so the
+  real message surfaces.
+- **Forms** (`components/FormField.tsx` shared kit): `TextField` (with `action`
+  slot for buttons like File upload), `TextAreaField`, `SelectField`,
+  `DateField`/`DateTimeField`, plus `components/UploadButton.tsx` (picker +
+  base64-inside-JSON upload, plugs into `action`). Same `label`/`hint`/`size`/`error` API on all
+  fields; `className`/`labelClassName` merge per utility-group (override wins its
+  group). Use the kit for every form; submit buttons are
+  `disabled={isPending || loading}` with a matching guard in `handleSubmit` so
+  edits can't wipe relations before dropdown data arrives.
 - **Organization scoping:** `organization_id` is resolved from the actor's link,
   never from payloads, never updatable; list endpoints scope to the actor's org
   (unlinked actors see unlinked rows). `UserListUseCase` additionally accepts
@@ -82,9 +93,17 @@ pm2 restart my-next-app
 - `POST /base/api/v1/tools/upload-file` takes
   `{filename, content_type?, data (base64)}` → Tencent COS, returns
   `{key, url, content_type, size, etag}` (permission `base:tools:upload:upload`).
+  File buttons are permission-gated in the UI (lead metadata rows, activity
+  attachment field); activity cards show a `View attachment` link when set.
+  Session permissions snapshot at login — re-login after seed/grant changes.
+- Lead metadata edits sync with full-replacement semantics (omitted rows are
+  soft-deleted, `[]` deletes all); dropdown fetches degrade independently
+  (`Promise.allSettled`, per-panel errors).
 - UI smoke scripts live outside the repo: `/tmp/opencode/sales-smoke.mjs`
   (`SMOKE_ENCRYPTED=1` for the real exchange), `sales-ui-smoke.mjs`
-  (`BASE_URL=` override). Test reports accumulate in `testsuite/` (gitignored).
+  (`BASE_URL=` override). Test reports accumulate in `testsuite/` (gitignored) —
+  latest form audit `20261005-014506.md` (F-01…F-09 fixed; F-04 dead SSO buttons
+  and the UpdateProfileForm logout note intentionally excluded).
 
 ## Known issues
 

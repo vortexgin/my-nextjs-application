@@ -2,17 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { ROLE_LIST_PATH } from "@/app/base/views/roles/paths";
 import type { Action } from "@/app/base/models/ActionModel";
 import type { Role } from "@/app/base/models/RoleModel";
 import { getEncrypted, postEncrypted, putEncrypted } from "@/libraries/EncryptedFetch";
+import { SelectField, TextField } from "@/components/FormField";
 
 const API_PATH = "/base/api/v1/roles";
 const ACTION_API_PATH = "/base/api/v1/actions";
-
-const inputClass =
-  "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100";
 
 type ActionOption = {
   uuid: string;
@@ -78,10 +76,14 @@ export function RoleForm({
   const [error, setError] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [actionOptions, setActionOptions] = useState<ActionOption[]>([]);
+  // `initial.action_ids` is provided synchronously by the server edit page at
+  // mount (and absent on create), so seeding once is correct — no re-sync that
+  // could clobber user toggles.
   const [selectedActions, setSelectedActions] = useState<string[]>(initial?.action_ids ?? []);
   const [activeDomain, setActiveDomain] = useState("");
   const [optionsLoading, setOptionsLoading] = useState(true);
   const [optionsError, setOptionsError] = useState("");
+  const tabRefs = useRef(new Map<string, HTMLButtonElement>());
 
   useEffect(() => {
     let active = true;
@@ -137,8 +139,43 @@ export function RoleForm({
     return selectedActions.filter((id) => uuids.has(id)).length;
   }
 
+  function handleTabKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (
+      event.key !== "ArrowRight" &&
+      event.key !== "ArrowLeft" &&
+      event.key !== "Home" &&
+      event.key !== "End"
+    ) {
+      return;
+    }
+    event.preventDefault();
+    const domains = domainGroups.map((group) => group.domain);
+    const currentIndex = domains.indexOf(activeTab);
+    let nextIndex = currentIndex;
+    if (event.key === "ArrowRight") {
+      nextIndex = (currentIndex + 1) % domains.length;
+    } else if (event.key === "ArrowLeft") {
+      nextIndex = (currentIndex - 1 + domains.length) % domains.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else {
+      nextIndex = domains.length - 1;
+    }
+    const next = domains[nextIndex];
+    if (next) {
+      setActiveDomain(next);
+      tabRefs.current.get(next)?.focus();
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isPending || optionsLoading) {
+      setError(
+        isPending ? "A save is already in progress." : "Permissions are still loading. Please wait.",
+      );
+      return;
+    }
     setError("");
     setIsPending(true);
 
@@ -180,44 +217,38 @@ export function RoleForm({
         </h1>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Name</span>
-            <input
-              type="text"
-              name="name"
-              required
-              minLength={2}
-              maxLength={120}
-              defaultValue={initial?.name ?? ""}
-              placeholder="e.g. Administrator"
-              className={inputClass}
-            />
-          </label>
+          <TextField
+            label="Name"
+            type="text"
+            name="name"
+            required
+            minLength={2}
+            maxLength={120}
+            defaultValue={initial?.name ?? ""}
+            placeholder="e.g. Administrator"
+          />
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Slug</span>
-            <input
-              type="text"
-              name="slug"
-              required
-              minLength={2}
-              maxLength={160}
-              defaultValue={initial?.slug ?? ""}
-              placeholder="e.g. administrator"
-              className={inputClass}
-            />
-            <span className="mt-2 block text-xs text-slate-500">
-              Lowercase letters, numbers, dashes, underscores only.
-            </span>
-          </label>
+          <TextField
+            label="Slug"
+            type="text"
+            name="slug"
+            required
+            minLength={2}
+            maxLength={160}
+            defaultValue={initial?.slug ?? ""}
+            placeholder="e.g. administrator"
+            hint="Lowercase letters, numbers, dashes, underscores only."
+          />
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Status</span>
-            <select name="status" defaultValue={initial?.status ?? "active"} className={inputClass}>
-              <option value="active">active</option>
-              <option value="inactive">inactive</option>
-            </select>
-          </label>
+          <SelectField
+            label="Status"
+            name="status"
+            defaultValue={initial?.status ?? "active"}
+            options={[
+              { value: "active", label: "active" },
+              { value: "inactive", label: "inactive" },
+            ]}
+          />
 
           <fieldset className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
@@ -231,16 +262,31 @@ export function RoleForm({
               </p>
             ) : (
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <div className="flex flex-wrap gap-2" role="tablist" aria-label="Permission domains">
+                <div
+                  className="flex flex-wrap gap-2"
+                  role="tablist"
+                  aria-label="Permission domains"
+                  onKeyDown={handleTabKeyDown}
+                >
                   {domainGroups.map((group) => {
                     const count = selectedInDomain(group.domain);
                     const selected = group.domain === activeTab;
                     return (
                       <button
                         key={group.domain}
+                        ref={(node) => {
+                          if (node) {
+                            tabRefs.current.set(group.domain, node);
+                          } else {
+                            tabRefs.current.delete(group.domain);
+                          }
+                        }}
                         type="button"
                         role="tab"
+                        id={`role-permissions-tab-${group.domain}`}
                         aria-selected={selected}
+                        aria-controls="role-permissions-panel"
+                        tabIndex={selected ? 0 : -1}
                         onClick={() => setActiveDomain(group.domain)}
                         className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition ${
                           selected
@@ -254,7 +300,13 @@ export function RoleForm({
                     );
                   })}
                 </div>
-                <div className="mt-3 max-h-64 space-y-4 overflow-y-auto">
+                <div
+                  id="role-permissions-panel"
+                  role="tabpanel"
+                  aria-labelledby={`role-permissions-tab-${activeTab}`}
+                  tabIndex={0}
+                  className="mt-3 max-h-64 space-y-4 overflow-y-auto"
+                >
                   {activeEntities.map((entity) => (
                     <div key={entity.title}>
                       <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -290,7 +342,7 @@ export function RoleForm({
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="submit"
-              disabled={isPending}
+              disabled={isPending || optionsLoading}
               className="inline-flex items-center justify-center rounded-xl bg-slate-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500"
             >
               {isPending ? "Saving..." : mode === "create" ? "Create role" : "Save changes"}

@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { postEncrypted } from "@/libraries/EncryptedFetch";
+import { TextField } from "@/components/FormField";
 import { updatePasswordSchema, type UpdatePasswordFormState } from "@/app/dashboard/components/forms/UpdatePasswordSchema";
 
 type UpdatePasswordFormErrors = Partial<Record<keyof UpdatePasswordFormState, string>>;
@@ -17,20 +18,32 @@ export function UpdatePasswordForm({ token }: { token: string }) {
   const [errors, setErrors] = useState<UpdatePasswordFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [submitKind, setSubmitKind] = useState<"success" | "error" | null>(null);
+  const redirectTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimer.current !== null) {
+        window.clearTimeout(redirectTimer.current);
+        redirectTimer.current = null;
+      }
+    };
+  }, []);
 
   const updateField = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: undefined }));
     if (submitMessage) setSubmitMessage("");
+    if (submitKind) setSubmitKind(null);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    // Every validated key (password, passwordConfirmation) is declared in updatePasswordSchema.
     const { error, value } = updatePasswordSchema.validate(form, {
       abortEarly: false,
-      allowUnknown: true,
     });
 
     if (error) {
@@ -43,12 +56,14 @@ export function UpdatePasswordForm({ token }: { token: string }) {
 
       setErrors(nextErrors);
       setSubmitMessage("Please correct the highlighted fields.");
+      setSubmitKind("error");
       return;
     }
 
     setErrors({});
     setIsSubmitting(true);
     setSubmitMessage("");
+    setSubmitKind(null);
 
     try {
       const envelope = await postEncrypted<{ message: string }>("/sso/api/v1/update-password", {
@@ -58,13 +73,16 @@ export function UpdatePasswordForm({ token }: { token: string }) {
 
       if (!envelope.success) {
         setSubmitMessage(envelope.message || "Reset link invalid or expired.");
+        setSubmitKind("error");
         return;
       }
 
       setSubmitMessage("Password updated. Redirecting to sign in...");
-      window.setTimeout(() => router.push("/sso"), 1200);
+      setSubmitKind("success");
+      redirectTimer.current = window.setTimeout(() => router.push("/sso"), 1200);
     } catch {
       setSubmitMessage("Something went wrong. Please try again.");
+      setSubmitKind("error");
     } finally {
       setIsSubmitting(false);
     }
@@ -115,45 +133,39 @@ export function UpdatePasswordForm({ token }: { token: string }) {
       </div>
 
       <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
-        <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-700">New password</span>
-          <input
+        <div>
+          <TextField
+            label="New password"
             type="password"
             name="password"
             value={form.password}
             onChange={updateField}
             placeholder="At least 6 characters"
-            aria-invalid={Boolean(errors.password)}
-            className={`w-full rounded-xl border bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:ring-4 ${
+            error={errors.password}
+            className={
               errors.password
-                ? "border-red-300 focus:border-red-500 focus:ring-red-100"
-                : "border-slate-200 focus:border-blue-500 focus:ring-blue-100"
-            }`}
+                ? "w-full rounded-xl border border-red-300 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-100"
+                : undefined
+            }
           />
-          {errors.password ? (
-            <span className="mt-2 block text-sm text-red-600">{errors.password}</span>
-          ) : null}
-        </label>
+        </div>
 
-        <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-700">Confirm new password</span>
-          <input
+        <div>
+          <TextField
+            label="Confirm new password"
             type="password"
             name="passwordConfirmation"
             value={form.passwordConfirmation}
             onChange={updateField}
             placeholder="Repeat new password"
-            aria-invalid={Boolean(errors.passwordConfirmation)}
-            className={`w-full rounded-xl border bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:ring-4 ${
+            error={errors.passwordConfirmation}
+            className={
               errors.passwordConfirmation
-                ? "border-red-300 focus:border-red-500 focus:ring-red-100"
-                : "border-slate-200 focus:border-blue-500 focus:ring-blue-100"
-            }`}
+                ? "w-full rounded-xl border border-red-300 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-100"
+                : undefined
+            }
           />
-          {errors.passwordConfirmation ? (
-            <span className="mt-2 block text-sm text-red-600">{errors.passwordConfirmation}</span>
-          ) : null}
-        </label>
+        </div>
 
         <button
           type="submit"
@@ -163,7 +175,14 @@ export function UpdatePasswordForm({ token }: { token: string }) {
           {isSubmitting ? "Saving..." : "Save new password"}
         </button>
 
-        {submitMessage ? <p className="text-sm text-slate-600">{submitMessage}</p> : null}
+        {submitMessage ? (
+          <p
+            role={submitKind === "success" ? "status" : "alert"}
+            className={submitKind === "success" ? "text-sm text-green-700" : "text-sm text-red-600"}
+          >
+            {submitMessage}
+          </p>
+        ) : null}
       </form>
     </div>
   );
