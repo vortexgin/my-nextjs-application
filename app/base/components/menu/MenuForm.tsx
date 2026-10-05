@@ -190,7 +190,7 @@ export function MenuForm({
         return;
       }
 
-      router.push(MENU_LIST_PATH);
+      router.push(mode === "create" ? MENU_LIST_PATH : `${MENU_LIST_PATH}/${uuid}`);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

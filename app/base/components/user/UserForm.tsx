@@ -181,7 +181,7 @@ export function UserForm({
         return;
       }
 
-      router.push(USER_LIST_PATH);
+      router.push(mode === "create" ? USER_LIST_PATH : `${USER_LIST_PATH}/${uuid}`);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

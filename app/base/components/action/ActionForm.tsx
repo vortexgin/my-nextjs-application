@@ -51,7 +51,7 @@ export function ActionForm({
         return;
       }
 
-      router.push(ACTION_LIST_PATH);
+      router.push(mode === "create" ? ACTION_LIST_PATH : `${ACTION_LIST_PATH}/${uuid}`);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

@@ -28,6 +28,7 @@ npm run keys:generate                      # RSA keypair for API encryption (key
 export DATABASE_URL="postgres://..."       # dotenv is NOT installed; sequelize-cli needs this exported
 npx sequelize-cli db:migrate
 psql "$DATABASE_URL" -f database/seed-master-data.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/seed-product-sample.sql  # optional sample catalog
 npm run dev                                # http://localhost:3000
 ```
 

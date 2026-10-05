@@ -198,7 +198,7 @@ export function RoleForm({
         return;
       }
 
-      router.push(ROLE_LIST_PATH);
+      router.push(mode === "create" ? ROLE_LIST_PATH : `${ROLE_LIST_PATH}/${uuid}`);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
