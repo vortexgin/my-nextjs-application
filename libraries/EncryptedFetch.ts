@@ -25,6 +25,22 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
+function isEncryptedEnvelope(value: unknown): value is { iv: string; data: string } {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return typeof record.iv === "string" && typeof record.data === "string";
+}
+
+function isPlainApiEnvelope<T>(value: unknown): value is ApiEnvelope<T> {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return typeof record.success === "boolean";
+}
+
 function pemToDer(pem: string): ArrayBuffer {
   const body = pem
     .split("\n")
@@ -84,6 +100,30 @@ async function decryptEnvelope<T>(aesKey: CryptoKey, envelope: { iv: string; dat
 }
 
 /**
+ * Reads a fetch response that is normally an encrypted `{iv, data}`
+ * envelope. Auth-layer rejections (401/403 from withAuthorization) and
+ * exchange failures are intentionally plaintext `fail()` responses, so
+ * pass plain `{success, ...}` envelopes through untouched instead of
+ * feeding them to `atob` (which threw the misleading
+ * "Failed to execute 'atob'" error).
+ */
+async function unwrapResponse<T>(response: Response, aesKey: CryptoKey): Promise<ApiEnvelope<T>> {
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    throw new Error(`Request failed (HTTP ${response.status}). Please try again.`);
+  }
+  if (isEncryptedEnvelope(body)) {
+    return decryptEnvelope<T>(aesKey, body);
+  }
+  if (isPlainApiEnvelope<T>(body)) {
+    return body;
+  }
+  throw new Error(`Request failed (HTTP ${response.status}). Please try again.`);
+}
+
+/**
  * GETs through the hybrid RSA + AES-GCM exchange (mirrors libraries/Encryption.ts).
  * Returns the decrypted response envelope.
  */
@@ -94,7 +134,7 @@ export async function getEncrypted<T>(path: string): Promise<ApiEnvelope<T>> {
     method: "GET",
     headers: { "x-key-exchange": exchange },
   });
-  return decryptEnvelope<T>(aesKey, (await response.json()) as { iv: string; data: string });
+  return unwrapResponse<T>(response, aesKey);
 }
 
 async function sendEncrypted<T>(method: "POST" | "PUT" | "DELETE", path: string, payload?: unknown): Promise<ApiEnvelope<T>> {
@@ -105,7 +145,7 @@ async function sendEncrypted<T>(method: "POST" | "PUT" | "DELETE", path: string,
     headers: { "content-type": "application/json", "x-key-exchange": exchange },
     body: JSON.stringify(await encryptPayload(aesKey, payload)),
   });
-  return decryptEnvelope<T>(aesKey, (await response.json()) as { iv: string; data: string });
+  return unwrapResponse<T>(response, aesKey);
 }
 
 /**
@@ -135,5 +175,5 @@ export async function deleteEncrypted<T>(path: string): Promise<ApiEnvelope<T>> 
     method: "DELETE",
     headers: { "x-key-exchange": exchange },
   });
-  return decryptEnvelope<T>(aesKey, (await response.json()) as { iv: string; data: string });
+  return unwrapResponse<T>(response, aesKey);
 }
