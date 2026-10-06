@@ -46,7 +46,9 @@ Submodules (separate repos, commit inside each first, then the parent pointer):
   `settleTransaction`), `exceptions/` (typed errors with HTTP `.code`),
   `database/sequelize.ts` (lazy singleton), `migrations/` (sequelize-cli),
   `database/seed-master-data.sql` (idempotent `ON CONFLICT DO NOTHING` + role
-  grants; rerun freely).
+  grants; rerun freely) + `database/seed-product-sample.sql` (sample catalog).
+- Non-useCase helpers (sync/insert/row builders) live in
+  `app/<domain>/libraries/`, never inside `useCases/`.
 
 ## Rules that bite
 
@@ -69,6 +71,18 @@ Submodules (separate repos, commit inside each first, then the parent pointer):
   state, never from the filtered view (see testsuite F-01).
 - Lead metadata sync is full-replacement in `LeadUpdateUseCase` postExec:
   omitted rows are soft-deleted, so clearing a value = deleting the row.
+- Cross-module relation labels come from guarded eager `include`s in the
+  Get/List useCases (local `belongsTo` + associations-guard, dynamic imports,
+  missing modules degrade to nulls); `toApi` reads the included objects with
+  UUID fallback on pages. Exception: invoices snapshot `{id, name, ...}` as
+  JSONB at write time. Ledger history resolves names as they were at write
+  time — no `deleted_at` condition on display includes. Never join on the page
+  with extra GetUseCase calls; never block writes on relation reads.
+- Generic `Table`: every header sorts by its `key` unless `sortable: false`
+  (computed/label-only columns). `defaultSort` must be a server-allowed
+  `sortProperty`; extend the useCase allowlist for real columns instead of
+  sorting by raw UUIDs. Read-only lists set `hideManage`. Edit forms redirect
+  to the detail page on update, to the list on create.
 - `organization_id` is resolved from the actor, never from payloads, never
   updatable. Joi schemas reject unknown keys by default — keep it that way.
 - Soft delete (`deleted_at`) on everything; master-data names unique per org

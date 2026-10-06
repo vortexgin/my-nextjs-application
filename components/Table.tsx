@@ -13,6 +13,8 @@ export type TableColumn = {
   label: string;
   /** Row field rendered in this column. */
   field: string;
+  /** False renders a plain header (for computed or non-API-sortable columns). Defaults to true. */
+  sortable?: boolean;
 };
 
 export type TableRow = Record<string, unknown> & {
@@ -64,6 +66,7 @@ export function Table({
   actionDelete = [],
   pageSize = 10,
   defaultSort,
+  hideManage,
   labelField,
   renderCell,
   onDelete,
@@ -79,6 +82,8 @@ export function Table({
   extraParams?: Record<string, string>;
   pageSize?: number;
   defaultSort?: { key: string; dir: TableSortDir };
+  /** Hides the Manage column entirely (append-only / read-only lists). Defaults to false. */
+  hideManage?: boolean;
   /** Row field used in delete confirm text. Defaults to first column field. */
   labelField?: string;
   /** Custom cell render. Return undefined for default text render. */
@@ -188,8 +193,8 @@ export function Table({
   }
 
   const page = Math.floor(query.offset / pageSize) + 1;
-  const manageVisible = hasPermission(session.user, session.permissions, actionUpdate)
-    || hasPermission(session.user, session.permissions, actionDelete);
+  const manageVisible = !hideManage && (hasPermission(session.user, session.permissions, actionUpdate)
+    || hasPermission(session.user, session.permissions, actionDelete));
 
   return (
     <div>
@@ -210,19 +215,26 @@ export function Table({
             <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
               {columns.map((column) => {
                 const active = query.sort === column.key;
+                const sortable = column.sortable !== false;
                 return (
                   <th key={column.key} className="px-4 py-3 font-medium">
-                    <button
-                      type="button"
-                      onClick={() => toggleSort(column.key)}
-                      aria-label={`Sort by ${column.label} ${active && query.dir === "asc" ? "descending" : "ascending"}`}
-                      className={`inline-flex items-center gap-1.5 uppercase tracking-wider transition hover:text-slate-900 ${active ? "text-blue-600" : ""}`}
-                    >
-                      {column.label}
-                      <span aria-hidden className={active ? "" : "text-slate-300"}>
-                        {active ? (query.dir === "asc" ? "▲" : "▼") : "↕"}
+                    {sortable ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleSort(column.key)}
+                        aria-label={`Sort by ${column.label} ${active && query.dir === "asc" ? "descending" : "ascending"}`}
+                        className={`inline-flex items-center gap-1.5 uppercase tracking-wider transition hover:text-slate-900 ${active ? "text-blue-600" : ""}`}
+                      >
+                        {column.label}
+                        <span aria-hidden className={active ? "" : "text-slate-300"}>
+                          {active ? (query.dir === "asc" ? "▲" : "▼") : "↕"}
+                        </span>
+                      </button>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 uppercase tracking-wider">
+                        {column.label}
                       </span>
-                    </button>
+                    )}
                   </th>
                 );
               })}
