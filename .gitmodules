@@ -7,3 +7,6 @@
 [submodule "app/product"]
 	path = app/product
 	url = https://github.com/vortexgin/my-product-library.git
+[submodule "app/warehouse"]
+	path = app/warehouse
+	url = https://github.com/vortexgin/my-warehouse-library.git

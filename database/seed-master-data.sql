@@ -2144,7 +2144,21 @@ WHERE
         'product:metadata-field:create:create',
         'product:metadata-field:view:detail',
         'product:metadata-field:view:update',
-        'product:metadata-field:view:delete'
+        'product:metadata-field:view:delete',
+        'base:menu:warehouse:warehouse',
+        'base:menu:warehouse:warehouses',
+        'base:menu:warehouse:stocks',
+        'base:menu:warehouse:movements',
+        'warehouse:warehouse:list:list',
+        'warehouse:warehouse:create:create',
+        'warehouse:warehouse:view:detail',
+        'warehouse:warehouse:view:update',
+        'warehouse:warehouse:view:delete',
+        'warehouse:stock:list:list',
+        'warehouse:stock:view:detail',
+        'warehouse:movement:list:list',
+        'warehouse:movement:create:create',
+        'warehouse:movement:view:detail'
     ) ON CONFLICT DO NOTHING;
 
 --
@@ -2280,7 +2294,21 @@ WHERE
         'product:metadata-field:create:create',
         'product:metadata-field:view:detail',
         'product:metadata-field:view:update',
-        'product:metadata-field:view:delete'
+        'product:metadata-field:view:delete',
+        'base:menu:warehouse:warehouse',
+        'base:menu:warehouse:warehouses',
+        'base:menu:warehouse:stocks',
+        'base:menu:warehouse:movements',
+        'warehouse:warehouse:list:list',
+        'warehouse:warehouse:create:create',
+        'warehouse:warehouse:view:detail',
+        'warehouse:warehouse:view:update',
+        'warehouse:warehouse:view:delete',
+        'warehouse:stock:list:list',
+        'warehouse:stock:view:detail',
+        'warehouse:movement:list:list',
+        'warehouse:movement:create:create',
+        'warehouse:movement:view:detail'
     ) ON CONFLICT DO NOTHING;
 
 --
@@ -2821,3 +2849,109 @@ VALUES
 --
 -- PostgreSQL database dump complete
 --
+
+--
+-- Warehouse module actions
+--
+INSERT INTO
+    public.base_actions (
+        uuid,
+        action,
+        description,
+        status,
+        created_at,
+        updated_at,
+        deleted_at
+    )
+VALUES
+    ('bf8300f4-6568-4ab1-9fba-55865fcf80b2', 'base:menu:warehouse:warehouse', 'Access for warehouse module', 'active', NOW (), NOW (), NULL),
+    ('4a9b81ef-a1c4-4834-99a6-e067b7ace04d', 'base:menu:warehouse:warehouses', 'Access for warehouse warehouses module', 'active', NOW (), NOW (), NULL),
+    ('f3c6d64c-1b57-48db-8c6d-7a3d2534a609', 'base:menu:warehouse:stocks', 'Access for warehouse stocks module', 'active', NOW (), NOW (), NULL),
+    ('31d2d0f8-3c9d-4c7b-b661-d4886dee8e68', 'base:menu:warehouse:movements', 'Access for warehouse movements module', 'active', NOW (), NOW (), NULL),
+    ('ff2b1c1e-c759-422a-8a66-802e33c7bfbd', 'warehouse:warehouse:list:list', 'Access for list warehouse', 'active', NOW (), NOW (), NULL),
+    ('3bc11371-b566-46a9-8008-71633be6f123', 'warehouse:warehouse:create:create', 'Access for create warehouse', 'active', NOW (), NOW (), NULL),
+    ('1983e8f5-6e43-4bcd-a9cb-b41bcca85abf', 'warehouse:warehouse:view:detail', 'Access for view detail warehouse', 'active', NOW (), NOW (), NULL),
+    ('e586370b-5c76-4747-9c54-4af8d152096e', 'warehouse:warehouse:view:update', 'Access for update detail warehouse', 'active', NOW (), NOW (), NULL),
+    ('9b45b929-7a8e-41b4-b1fc-7806d9f5f5f4', 'warehouse:warehouse:view:delete', 'Access for delete warehouse', 'active', NOW (), NOW (), NULL),
+    ('7891e642-4506-4a18-b87e-ee243baab7bf', 'warehouse:stock:list:list', 'Access for list stock', 'active', NOW (), NOW (), NULL),
+    ('3522c863-6a8f-4d0c-a737-417f5460612d', 'warehouse:stock:view:detail', 'Access for view detail stock', 'active', NOW (), NOW (), NULL),
+    ('67872bbe-db82-4018-8003-7c692eff2590', 'warehouse:movement:list:list', 'Access for list movement', 'active', NOW (), NOW (), NULL),
+    ('0598b062-4ce1-4798-8149-4dc76bcaffa7', 'warehouse:movement:create:create', 'Access for create movement', 'active', NOW (), NOW (), NULL),
+    ('59a9ab70-44c2-492c-b4ca-4e153e011dd3', 'warehouse:movement:view:detail', 'Access for view detail movement', 'active', NOW (), NOW (), NULL)
+    ON CONFLICT DO NOTHING;
+
+--
+-- Warehouse module menus
+--
+INSERT INTO
+    public.base_menus (
+        uuid,
+        icon,
+        parent,
+        menu,
+        action_id,
+        description,
+        redirection,
+        status,
+        created_at,
+        updated_at,
+        deleted_at,
+        weight
+    )
+VALUES
+    (
+        '92c367da-7e4d-450a-a145-4b7808ce34d0',
+        '',
+        NULL,
+        'Warehouse',
+        'bf8300f4-6568-4ab1-9fba-55865fcf80b2',
+        'Access to warehouse settings',
+        '#',
+        'active',
+        NOW (),
+        NOW (),
+        NULL,
+        0
+    ),
+    (
+        'e6243acc-cc98-428a-8e7a-29fe70e75df6',
+        '-',
+        '92c367da-7e4d-450a-a145-4b7808ce34d0',
+        'Warehouses',
+        '4a9b81ef-a1c4-4834-99a6-e067b7ace04d',
+        'Access to warehouses settings',
+        '/warehouse/views/warehouses',
+        'active',
+        NOW (),
+        NOW (),
+        NULL,
+        0
+    ),
+    (
+        'ea0f3fbc-bd3d-468d-89fa-da9d688317cf',
+        '-',
+        '92c367da-7e4d-450a-a145-4b7808ce34d0',
+        'Stocks',
+        'f3c6d64c-1b57-48db-8c6d-7a3d2534a609',
+        'Access to stocks settings',
+        '/warehouse/views/stocks',
+        'active',
+        NOW (),
+        NOW (),
+        NULL,
+        1
+    ),
+    (
+        '81fb7d80-b88a-4630-943e-b99bfd7d8c61',
+        '-',
+        '92c367da-7e4d-450a-a145-4b7808ce34d0',
+        'Movements',
+        '31d2d0f8-3c9d-4c7b-b661-d4886dee8e68',
+        'Access to movements settings',
+        '/warehouse/views/movements',
+        'active',
+        NOW (),
+        NOW (),
+        NULL,
+        2
+    ) ON CONFLICT DO NOTHING;

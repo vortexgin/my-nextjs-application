@@ -3,6 +3,7 @@
 > Status: implemented (useCases/API/UI/migrations/seeds live) · Submodule: `app/product` (`vortexgin/my-product-library`)
 > Locked: `sku` required, `base_price` on product (required), `product-variant` table, `product-metadata` + `product-metadata-field` like leads
 > Next: Warehouse (`warehouse, stock, movement` FK `product_id`/`variant_id`) · Marketing (`campaign, campaign-product` FK same, promo overrides only)
+> BoM: `prd_product_boms` (parent product + optional parent-variant scope → component product + optional component variant × qty). Managed nested via product create/update only (full-replacement sync, no direct API). An `out` movement explodes the BoM: component stocks decrement in the same DB transaction (single level, variant-specific rows win, shortage anywhere → 422, audit legs `ref_type="bom"`).
 
 Vertical-slice rule: `models/` (`toApi()` + lazy factory, `underscored:true`, `timestamps:false`) → `useCases/<entity>/` (`List/Get/Create/Update/Delete` extending `BaseUseCase`: Joi in `preExec`, `recordActivityLog` in `postExec`) → `api/[version]/` (`export const runtime="nodejs"`, `withAuthorization(handler,[...codes])`, `ok()`/`fail()`, JSON-only `{iv,data}` via `EncryptedFetch`) → `components/` + `views/` + `paths.ts`.
 
@@ -21,7 +22,7 @@ app/product/
   views/ products/paths.ts (+ product-variants/, product-categories/, product-units/ dirs — pages next)
 ```
 
-Tables: `prd_products`, `prd_product_variants`, `prd_categories`, `prd_units`, `prd_product_metadata`, `prd_product_metadata_fields`. Migrations + partial unique indexes (`organization_id, sku` / `organization_id, name` with `NULLS NOT DISTINCT`) live in `migrations/20261005-*` (applied).
+Tables: `prd_products`, `prd_product_variants`, `prd_categories`, `prd_units`, `prd_product_metadata`, `prd_product_metadata_fields`, `prd_product_boms`. Migrations + partial unique indexes (`organization_id, sku` / `organization_id, name` / `(organization_id, product_id, variant_id, component_product_id, component_variant_id)` with `NULLS NOT DISTINCT`) live in `migrations/20261005-*` (applied).
 
 ---
 
@@ -81,6 +82,14 @@ Admin defines `category {name, description}` and `unit {name, symbol}` per org (
 ## F-05 Metadata field + F-06 Metadata (leads parity)
 
 Field CRUD same as `lead-metadata-field` (name unique per org). Value rows `{product_id, variant_id null, product_metadata_field_id, value}`; direct CRUD exists but UI uses nested product/variant payloads. Variant-level rows (`variant_id` set) sync only within variant scope. File values store COS `url` strings via `POST /base/api/v1/tools/upload-file` base64-JSON (File button per row, `CLIENT_MAX_FILE_BYTES` guard).
+
+## F-07 Bill of materials (nested, no direct API)
+
+As ops user, I define what a sellable is made of (`component_product_id` + optional `component_variant_id` × `qty`, optionally scoped to a parent `variant_id`) so issuing the parent consumes components automatically. Table `prd_product_boms`; no routes or use-case CRUD — managed nested via product create/update `bom[]` only.
+
+- Payload item: `{uuid?, component_product_id!, component_variant_id?, variant_id?, qty>=1}`. Full-replacement sync across the product (omitted rows soft-delete); direct self-reference rejected; unknown component → 404, cross-org component → 403; duplicate scope rows → 409 (partial unique index `(organization_id, product_id, variant_id, component_product_id, component_variant_id)` `NULLS NOT DISTINCT` + race map).
+- Warehouse `out` movement explodes the BoM in the same DB transaction: variant-specific rows win when present, else generic rows; each component decrements `qty × parent qty` from the same warehouse; shortage anywhere → 422 with nothing written; component audit legs (`type out`, `ref_type "bom"`, `ref_id` = parent movement) are recorded. Single level only (components never re-explode); `in`/`adjust`/`transfer` never explode.
+- No new permission codes (covered by `product:product:*`); activity entity `product_bom`.
 
 ## Permission codes
 

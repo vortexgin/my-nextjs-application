@@ -13,12 +13,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 Next.js 16.3.4 (App Router) · React 19 · Sequelize 6 + Postgres · Joi · Tailwind 4.
 Submodules (separate repos, commit inside each first, then the parent pointer):
 `app/sass` (`my-sass-library`), `app/sales` (`my-sales-library`),
-`app/product` (`my-product-library`).
+`app/product` (`my-product-library`), `app/warehouse` (`my-warehouse-library`).
 
 ## Project requirements (source of truth)
 
 - `features/` is the requirements directory — timestamp-prefixed (`20261005-NN-*.md`), chronological by filename. Read the relevant spec before designing or coding; the lowest-numbered spec for a domain is the oldest context.
-- Current order: `01-sso`, `02-base`, `03-sass`, `04-sales`, `05-sales-d-a-b-mvp`, `06-product-design`. New specs continue the sequence (`07-...`), never rename existing files.
+- Current order: `01-sso`, `02-base`, `03-sass`, `04-sales`, `05-sales-d-a-b-mvp`, `06-product-design`, `07-warehouse-design`. New specs continue the sequence (`08-...`), never rename existing files.
 
 ## Breaking framework conventions (verified in tree)
 
