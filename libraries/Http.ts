@@ -40,6 +40,21 @@ export function queryParam(params: URLSearchParams, key: string): string | undef
   return value === null || value.trim() === "" ? undefined : value;
 }
 
+/**
+ * Forwards every `filter[*]` query param so Joi (`unknown(false)`) rejects
+ * unknown keys with 400 instead of silently ignoring them.
+ */
+export function collectFilters(params: URLSearchParams): Record<string, string> {
+  const filter: Record<string, string> = {};
+  params.forEach((value, key) => {
+    const match = key.match(/^filter\[(.+)\]$/);
+    if (match && value.trim() !== "") {
+      filter[match[1]] = value;
+    }
+  });
+  return filter;
+}
+
 /** Public app origin used for outbound links (password reset, invites). No trailing slash. */
 export function appBaseUrl(): string {
   return (process.env.APP_URL ?? "http://localhost:3000").replace(/\/+$/, "");

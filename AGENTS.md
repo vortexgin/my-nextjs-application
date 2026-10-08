@@ -17,8 +17,8 @@ Submodules (separate repos, commit inside each first, then the parent pointer):
 
 ## Project requirements (source of truth)
 
-- `features/` is the requirements directory — timestamp-prefixed (`20261005-NN-*.md`), chronological by filename. Read the relevant spec before designing or coding; the lowest-numbered spec for a domain is the oldest context.
-- Current order: `01-sso`, `02-base`, `03-sass`, `04-sales`, `05-sales-d-a-b-mvp`, `06-product-design`, `07-warehouse-design`. New specs continue the sequence (`08-...`), never rename existing files.
+- `features/` is the requirements directory — per-file calendar-date prefixed (`YYYYMMDD-NN-*.md`), chronological by filename. Read the relevant spec before designing or coding; the lowest-numbered spec for a domain is the oldest context.
+- Current order: `01-sso`, `02-base`, `03-sass`, `04-sales`, `05-sales-d-a-b-mvp`, `06-product-design`, `07-warehouse-design`, `08-sales-customer-pr-so-do`. New specs continue the sequence (`09-...`), never rename existing files.
 
 ## Breaking framework conventions (verified in tree)
 
