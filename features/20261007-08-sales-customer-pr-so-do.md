@@ -69,9 +69,15 @@ Joi.object({
 
 `customer_id` same-org validated; product/variant existence via guarded import (absent module → skip check, store uuids). Plain activity logs. Statuses `draft→submitted→approved→(SO)→closed`, `rejected` terminal.
 
+Purchase requests support shared document metadata rows (`sales_doc_metadata_fields`): create/update accepts `metadata[]` as `{uuid?, sales_doc_metadata_field_id?, field_name?, value}`. The submitted array is a full replacement (omitted rows are soft-deleted); `field_name` creates or reuses a field in the actor organization. Forms support shared-field selection, inline field creation, and file-upload values; detail reads expose field names with UUID fallback.
+
 ## F-04 Sales order (billing-gated, PR-referable)
 
 Same item shape as PR. `purchase_request_id` optional same-org; UI "Copy deal prices from PR" pre-fills items client-side (payload stays explicit). Server snapshots totals (same formulas). Creating SO from PR marks PR `closed` best-effort in-scope.
+
+Sales orders use the same shared document metadata contract as purchase requests: nested `metadata[]` accepts `{uuid?, sales_doc_metadata_field_id?, field_name?, value}`, replaces the active set in full, scopes fields through the parent SO organization, and soft-deletes omitted rows. The form independently loads central field options, supports inline field creation and uploaded-file values, and Get/detail reads batch field names with UUID fallback.
+
+PR, SO, and DO share one organization-scoped field catalog (`sales_doc_metadata_fields`, exposed at `/sales/api/v1/doc-metadata-fields`) rather than separate field-definition tables.
 
 - `checkTransaction(actor,"sales:sales-order:create:create")` in `preExec`, per-order `settleTransaction(entity:"sales-order")` in `postExec`. SO create is gated (the money event); PR create is not.
 - Routes `GET/POST /sales/api/v1/sales-orders` + `/:uuid` (+ `/:uuid/items` read via order detail joins or item list `filter[sales_order_id]`).
@@ -87,6 +93,8 @@ Joi ship: { fulfillment: Joi.string().valid("system","paper").required(), notes?
   - `system`: guarded `import("@/app/warehouse/...")` → availability (`on_hand - reserved`, 422 when short) → `insertMovementRow` per item `{type:"out", ref_type:"delivery-order", ref_id: do_uuid}` in DB transaction → `fulfillment=system, stock_deducted=true`.
   - `paper`: no warehouse touch → `fulfillment=paper, stock_deducted=false` + persistent banner ("Paper delivery — stock not deducted"). Later `POST .../ship {fulfillment:"system"}` posts movements and flips flags without a second settle (billing happened at first ship).
   - Warehouse module absent + `fulfillment=system` requested → 400 with guidance to use paper (no 501; paper keeps ops moving).
+
+Delivery orders use the same nested shared-document metadata contract as PR/SO. Create and update accept a full-replacement `metadata[]`; metadata remains editable without making line items mutable. Standalone metadata CRUD scopes through the parent DO and returns 404 on organization mismatch. Forms load the central field catalog independently, support inline field creation and uploaded-file values, and Get/detail batch field names with UUID fallback.
 
 ## F-06 Invoice ↔ SO link (sass migration only)
 
@@ -113,9 +121,13 @@ sales:customer:list:list, create:create, view:detail/update/delete
 sales:customer-metadata:list:list, create:create, view:detail/update/delete
 sales:customer-metadata-field:list:list, create:create, view:detail/update/delete
 sales:customer-activity:list:list, create:create, view:detail/update/delete
+sales:doc-metadata-field:list:list, create:create, view:detail/update/delete
 sales:purchase-request:list:list, create:create, view:detail/update/delete
+sales:purchase-request-metadata:list:list, create:create, view:detail/update/delete
 sales:sales-order:list:list, create:create (gated), view:detail/update/delete
+sales:sales-order-metadata:list:list, create:create, view:detail/update/delete
 sales:delivery-order:list:list, create:create, view:detail/update/delete, view:ship (gated)
+sales:delivery-order-metadata:list:list, create:create, view:detail/update/delete
 sass:invoice gains filter only (no new codes)
 ```
 

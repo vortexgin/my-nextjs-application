@@ -6,8 +6,9 @@
 -- probe login (admin@vortexgin.com) sees them.
 --
 -- Requires product + warehouse samples first (PRD-001/PRD-002 + WH-MAIN),
--- and migrations through 20261008 applied (customers, PR/SO/DO tables,
--- sass_invoice sales_order link). Aborts loudly when prerequisites are missing.
+-- and migrations through 20261008-04 applied (customers, PR/SO/DO tables,
+-- shared document metadata tables, sass_invoice sales_order link). Aborts
+-- loudly when prerequisites are missing.
 --
 --   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/seed-sales-customer-so-sample.sql
 --
@@ -29,6 +30,12 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.base_roles WHERE slug = 'admin') THEN
     RAISE EXCEPTION 'seed-master-data.sql must run first (admin role missing)';
+  END IF;
+  IF to_regclass('public.sales_doc_metadata_fields') IS NULL
+     OR to_regclass('public.sales_purchase_request_metadata') IS NULL
+     OR to_regclass('public.sales_order_metadata') IS NULL
+     OR to_regclass('public.sales_delivery_order_metadata') IS NULL THEN
+    RAISE EXCEPTION 'document metadata migrations through 20261008-04 must run first';
   END IF;
 END $$;
 
@@ -92,6 +99,17 @@ VALUES
     ('f8e5d4c3-0b6a-4d4e-af7b-5c9d1e3a4b84', 'c5b2a1f0-7e3d-4a1b-9c4e-2f6a8b0d1e51', 'e7d4c3b2-9a5f-4c3d-be6a-4b8c0d2f3a73', 'Gold', 'active', NOW(), NOW(), NULL)
 ON CONFLICT DO NOTHING;
 
+-- Shared PR/SO/DO metadata field catalog --------------------------------------
+-- These fields are organization-less so the sample documents can share them.
+-- Name-based references below also make the seed safe when a field with the
+-- same unique (organization, name) key already exists under another UUID.
+INSERT INTO public.sales_doc_metadata_fields (uuid, organization_id, name, description, status, created_at, updated_at, deleted_at)
+VALUES
+    ('0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d', NULL, 'Customer Reference', 'Customer request or purchase-order reference carried across sales documents.', 'active', NOW(), NOW(), NULL),
+    ('1b2c3d4e-5f6a-4b7c-8d9e-0f1a2b3c4d5e', NULL, 'Payment Terms', 'Commercial payment terms agreed for the document.', 'active', NOW(), NOW(), NULL),
+    ('2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f', NULL, 'Delivery Instructions', 'Handling and receiving instructions for delivery.', 'active', NOW(), NOW(), NULL)
+ON CONFLICT DO NOTHING;
+
 -- Purchase request (approved → closed by SO-1) ----------------------------------
 -- Math: 2×150000 = 300000; 5×99000×0.9 = 445500; subtotal 745500;
 -- grand = round(745500×0.95) = 708225.
@@ -143,6 +161,39 @@ VALUES
     ('a88bd009-2d8e-4f5a-8b3c-334455667788', 'e66fb007-0b6c-4d5e-8f1a-122334455667',
      (SELECT uuid FROM public.prd_products WHERE sku = 'PRD-002'),
      (SELECT uuid FROM public.prd_product_variants WHERE sku = 'PRD-002-BLK'), 5, NOW(), NOW(), NULL)
+ON CONFLICT DO NOTHING;
+
+-- Document metadata values ----------------------------------------------------
+-- PR and SO demonstrate reuse of shared fields; DO resolves its customer
+-- reference through the same catalog and adds delivery-specific instructions.
+INSERT INTO public.sales_purchase_request_metadata (uuid, purchase_request_id, sales_doc_metadata_field_id, value, status, created_at, updated_at, deleted_at)
+VALUES
+    ('3d4e5f6a-7b8c-4d9e-8f0a-1b2c3d4e5f60', 'a11ce001-4b2c-4d3e-8f5a-6b7c8d9e0f11',
+     (SELECT uuid FROM public.sales_doc_metadata_fields WHERE organization_id IS NULL AND name = 'Customer Reference' AND deleted_at IS NULL),
+     'ACME-REQ-2026-001', 'active', NOW(), NOW(), NULL),
+    ('4e5f6a7b-8c9d-4e0f-8a1b-2c3d4e5f6071', 'a11ce001-4b2c-4d3e-8f5a-6b7c8d9e0f11',
+     (SELECT uuid FROM public.sales_doc_metadata_fields WHERE organization_id IS NULL AND name = 'Payment Terms' AND deleted_at IS NULL),
+     'Net 30', 'active', NOW(), NOW(), NULL)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.sales_order_metadata (uuid, sales_order_id, sales_doc_metadata_field_id, value, status, created_at, updated_at, deleted_at)
+VALUES
+    ('5f6a7b8c-9d0e-4f1a-8b2c-3d4e5f607182', 'c44ea004-7e5f-4a5b-8c8d-9e0f11223444',
+     (SELECT uuid FROM public.sales_doc_metadata_fields WHERE organization_id IS NULL AND name = 'Customer Reference' AND deleted_at IS NULL),
+     'ACME-PO-2026-001', 'active', NOW(), NOW(), NULL),
+    ('6a7b8c9d-0e1f-4a2b-8c3d-4e5f60718293', 'c44ea004-7e5f-4a5b-8c8d-9e0f11223444',
+     (SELECT uuid FROM public.sales_doc_metadata_fields WHERE organization_id IS NULL AND name = 'Payment Terms' AND deleted_at IS NULL),
+     'Net 30', 'active', NOW(), NOW(), NULL)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.sales_delivery_order_metadata (uuid, sales_delivery_order_id, sales_doc_metadata_field_id, value, status, created_at, updated_at, deleted_at)
+VALUES
+    ('7b8c9d0e-1f2a-4b3c-8d4e-5f60718293a4', 'e66fb007-0b6c-4d5e-8f1a-122334455667',
+     (SELECT uuid FROM public.sales_doc_metadata_fields WHERE organization_id IS NULL AND name = 'Customer Reference' AND deleted_at IS NULL),
+     'ACME-PO-2026-001', 'active', NOW(), NOW(), NULL),
+    ('8c9d0e1f-2a3b-4c4d-8e5f-60718293a4b5', 'e66fb007-0b6c-4d5e-8f1a-122334455667',
+     (SELECT uuid FROM public.sales_doc_metadata_fields WHERE organization_id IS NULL AND name = 'Delivery Instructions' AND deleted_at IS NULL),
+     'Deliver to receiving dock B; call 30 minutes before arrival.', 'active', NOW(), NOW(), NULL)
 ON CONFLICT DO NOTHING;
 
 -- Invoice linked to the sales order (snapshot, no FK) ---------------------------
