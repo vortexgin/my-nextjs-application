@@ -81,10 +81,20 @@ Submodules (separate repos, commit inside each first, then the parent pointer):
 - Generic `Table`: every header sorts by its `key` unless `sortable: false`
   (computed/label-only columns). `defaultSort` must be a server-allowed
   `sortProperty`; extend the useCase allowlist for real columns instead of
-  sorting by raw UUIDs. Read-only lists set `hideManage`. Edit forms redirect
+  sorting by raw UUIDs. Read-only lists set `hideManage`. Row-lifecycle locks
+  via `isRowLocked` (hides Edit+Delete) with per-action overrides
+  `isRowUpdateLocked` / `isRowDeleteLocked` + `lockedLabel` (e.g. PR hides both
+  when closed, SO hides both unless draft, DO hides Edit on
+  delivered/cancelled and Delete unless draft). Edit forms redirect
   to the detail page on update, to the list on create.
 - `organization_id` is resolved from the actor, never from payloads, never
   updatable. Joi schemas reject unknown keys by default — keep it that way.
+  Strict same-org everywhere: List useCases always push an `organization_id`
+  condition (linked → own org, unlinked/anonymous → `NULL`, i.e. unlinked rows
+  only). Get/Update/Delete/convert compare the row's org to the actor's and
+  throw `NotFoundException` (404, never 403) on mismatch to avoid leaking
+  cross-org existence. The only exception is `UserListUseCase` (admin user
+  administration keeps full visibility + opt-in `filter[org_scope]=actor`).
 - Soft delete (`deleted_at`) on everything; master-data names unique per org
   (partial unique index `NULLS NOT DISTINCT` + `DuplicateEntityException` 409
   on create/rename, plus `UniqueConstraintError` mapping for races).
@@ -93,6 +103,34 @@ Submodules (separate repos, commit inside each first, then the parent pointer):
   because a sibling fetch failed (see testsuite F-02).
 - Modals: portal to `document.body` — ancestor cards use `backdrop-blur`, which
   traps `position: fixed` overlays (see LeadActivityModal).
+- Money display is `libraries/Currency.ts` `formatMoney` (id-ID thousand
+  grouping, `—` fallback) with right-aligned `tabular-nums` cells/rows —
+  display-only; inputs stay raw and snapshots stay unformatted numbers.
+- Document numbers (PR/SO/DO): `{PR|SO|DO}/YYYY/{roman MM}/{5-digit seq}`,
+  unique per organization (partial unique index `NULLS NOT DISTINCT` +
+  `doc_number IS NOT NULL`). Sequence is per (org, type, year-month) via
+  `sales_doc_sequences` + atomic `nextDocNumber()` (`app/sales/libraries/`,
+  INSERT-then-UPDATE…RETURNING, race-safe incl. NULL orgs); creates stamp it,
+  updates never touch it. Lists show Doc No instead of ID and sort by it.
+- Converted-state UI reads ground-truth rows, never status strings: lead with
+  `customer.lead_id` hides Convert (links View customer); PR with an SO hides
+  Edit/Delete (links View sales order → SO list pre-filtered by PR). Button
+  visibility by lifecycle status: PR Create on approved/closed; SO Edit/Delete
+  on draft, Create delivery when not draft/cancelled; DO Edit on
+  draft/packed/shipped, Delete on draft.
+- DO lines are capped by remaining qty: ordered − shipped/delivered (paper and
+  system both consume; draft/packed/cancelled don't), exact product+variant
+  match summed across duplicate rows, 400 never silently capped — enforced in
+  `DeliveryOrderCreateUseCase`, mirrored client-side (`max` + hint). DO items
+  are fixed after creation (update accepts notes + status only); `packed` ships
+  via the ship endpoint, `delivered` only from `shipped`.
+- Create payloads are mode-split: immutable links (`customer_id`,
+  `purchase_request_id`, `sales_order_id`, `warehouse_id`) and create-only keys
+  go out on edit; creates start at `draft` (PR create accepts draft-only
+  status; the form shows a static note instead of the dropdown). Deep-linked
+  creates (`?purchase_request_id=`, `?sales_order_id=`) lock the link field;
+  list pages accept the same `filter[*]` presets via
+  searchParams → `initialParams`.
 
 ## Operations
 

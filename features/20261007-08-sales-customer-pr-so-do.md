@@ -141,3 +141,50 @@ sass:invoice gains filter only (no new codes)
 ## Out of scope
 
 Lot/expiry, fixed-amount discounts, auto `is_start` flag, SO←DO reverse flows, payment gateway, invoice creation inside sales (sass-owned, pre-fill only).
+
+## Delivered updates (2026-10-09, implemented on top of this spec)
+
+Locked decisions below extend the spec; the approved sections above are unchanged.
+
+- **Strict same-org everywhere** (closes the unlinked-actor leak): every
+  `*ListUseCase` (sales, product, warehouse) always pushes an
+  `organization_id` condition — linked actors see their org, unlinked see
+  unlinked-only. Lead Get/Update/Delete + convert 404 (never 403) on org
+  mismatch. Exception: `UserListUseCase` keeps full visibility for admin user
+  administration. Same-org `customer_id` on convert is therefore guaranteed.
+- **Document numbers**: `{PR|SO|DO}/YYYY/{roman MM}/{5-digit seq}`, stamped at
+  create from per-(org, type, year-month) `sales_doc_sequences` via atomic
+  `nextDocNumber()` (`app/sales/libraries/docNumber.ts`); unique per
+  organization (partial unique index, `NULLS NOT DISTINCT`); updates never
+  touch it. Lists show/sort Doc No instead of ID; detail titles + dropdown
+  labels use it with UUID fallback.
+- **Relation labels on reads**: PR/SO/DO Get useCases attach
+  customer/warehouse/PR + item product/variant labels (guarded eager includes
+  + batch lookups, UUID fallback); detail pages render names/SKUs and items as
+  tables; PR/SO/DO lists show customer names (DO resolved via parent SO).
+- **Money display**: `libraries/Currency.ts` `formatMoney` (id-ID grouping),
+  right-aligned `tabular-nums` on detail rows, table cells, board badges, form
+  previews/labels. Inputs and snapshots stay raw.
+- **Converted-state + lifecycle buttons** (ground-truth rows, not status):
+  converted lead hides Convert → View customer; converted PR hides
+  Edit/Delete → View sales order (SO list pre-filtered by PR); PR Create only
+  on approved/closed; SO Edit/Delete only on draft, Create delivery when not
+  draft/cancelled; DO Edit on draft/packed/shipped, Delete on draft.
+  `Table` gained `isRowLocked` + `isRowUpdateLocked`/`isRowDeleteLocked` +
+  `lockedLabel`.
+- **DO remaining-qty cap**: lines capped by SO remaining (ordered −
+  shipped/delivered, paper and system; exact product+variant match, summed),
+  400 never silently capped; form restricts products/variants to the SO's
+  lines with `max` + hint.
+- **DO edit + flows**: DO edit page (notes/status only, items fixed, redirect
+  to detail); `delivered` only from `shipped` (via Edit after shipping);
+  deep-linked creates lock the link field (`?purchase_request_id=`,
+  `?sales_order_id=`); SO/DO lists accept the same presets via
+  searchParams → `initialParams`; PR/SO/DO lists filter by
+  customer/warehouse (+PR/SO link) and status.
+- **Forms**: create payloads omit immutable links and create-only keys per
+  mode; PR creates start at draft (schema draft-only, static note in form);
+  `OrderItemsEditor` moved to `app/sales/components/orderItems/`.
+- **Seed**: `database/seed-sales-customer-so-sample.sql` — Acme chain
+  (customer → PR closed → SO confirmed → DO packed → running invoice linked
+  to SO) + sales menu rows/actions + admin menu grants (re-login to pick up).

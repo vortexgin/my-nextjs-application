@@ -70,6 +70,10 @@ export function Table({
   labelField,
   renderCell,
   onDelete,
+  isRowLocked,
+  isRowUpdateLocked,
+  isRowDeleteLocked,
+  lockedLabel,
 }: {
   session: SessionInfo,
   columns: TableColumn[];
@@ -90,6 +94,14 @@ export function Table({
   renderCell?: (column: TableColumn, row: TableRow, value: unknown) => ReactNode;
   /** Deletes one row by uuid. Returns error message, empty on success. */
   onDelete?: DeleteRow;
+  /** Hides Edit/Delete for locked rows (e.g. converted PRs). Defaults to never locked. */
+  isRowLocked?: (row: TableRow) => boolean;
+  /** Hides Edit only; falls back to isRowLocked. */
+  isRowUpdateLocked?: (row: TableRow) => boolean;
+  /** Hides Delete only; falls back to isRowLocked. */
+  isRowDeleteLocked?: (row: TableRow) => boolean;
+  /** Badge text for locked rows. Defaults to "Closed". */
+  lockedLabel?: string;
 }) {
   const initialSort = defaultSort?.key ?? columns[0].key;
   const initialDir = defaultSort?.dir ?? "desc";
@@ -278,33 +290,52 @@ export function Table({
                   })}
                   {manageVisible ? (
                     <td className="px-4 py-3">
-                      <span className="flex items-center justify-end gap-2">
-                        <AuthComponent
-                          user={session.user}
-                          permissions={session.permissions}
-                          allowedPermissions={actionUpdate}
-                        >
-                          <Link
-                            href={`${basePath}/${row.uuid}/edit`}
-                            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-                          >
-                            Edit
-                          </Link>
-                        </AuthComponent>
-                        <AuthComponent
-                          user={session.user}
-                          permissions={session.permissions}
-                          allowedPermissions={actionDelete}
-                        >
-                          <Link
-                            href="#"
-                            onClick={() => handleDelete(row)}
-                            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-                          >
-                            Delete
-                          </Link>
-                        </AuthComponent>
-                      </span>
+                      {(() => {
+                        const editHidden = isRowUpdateLocked?.(row) ?? isRowLocked?.(row) ?? false;
+                        const deleteHidden = isRowDeleteLocked?.(row) ?? isRowLocked?.(row) ?? false;
+                        if (editHidden && deleteHidden) {
+                          return (
+                            <span className="flex items-center justify-end">
+                              <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
+                                {lockedLabel ?? "Closed"}
+                              </span>
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="flex items-center justify-end gap-2">
+                            {!editHidden ? (
+                              <AuthComponent
+                                user={session.user}
+                                permissions={session.permissions}
+                                allowedPermissions={actionUpdate}
+                              >
+                                <Link
+                                  href={`${basePath}/${row.uuid}/edit`}
+                                  className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                                >
+                                  Edit
+                                </Link>
+                              </AuthComponent>
+                            ) : null}
+                            {!deleteHidden ? (
+                              <AuthComponent
+                                user={session.user}
+                                permissions={session.permissions}
+                                allowedPermissions={actionDelete}
+                              >
+                                <Link
+                                  href="#"
+                                  onClick={() => handleDelete(row)}
+                                  className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                                >
+                                  Delete
+                                </Link>
+                              </AuthComponent>
+                            ) : null}
+                          </span>
+                        );
+                      })()}
                     </td>
                   ) : null}
                 </tr>
