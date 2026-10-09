@@ -2218,6 +2218,34 @@ WHERE
     ) ON CONFLICT DO NOTHING;
 
 --
+-- Grants for role: admin (pos codes)
+--
+INSERT INTO
+    public.base_permissions (uuid, role_id, action_id, created_at, updated_at)
+SELECT
+    gen_random_uuid (),
+    r.uuid,
+    a.uuid,
+    NOW (),
+    NOW ()
+FROM
+    public.base_roles r
+    CROSS JOIN public.base_actions a
+WHERE
+    r.slug = 'admin'
+    AND a.action IN (
+        'base:menu:sales:pos',
+        'sales:pos-session:list:list',
+        'sales:pos-session:create:create',
+        'sales:pos-session:view:detail',
+        'sales:pos-session:view:close',
+        'sales:pos-transaction:list:list',
+        'sales:pos-transaction:create:create',
+        'sales:pos-transaction:view:detail',
+        'sales:pos-transaction:view:void'
+    ) ON CONFLICT DO NOTHING;
+
+--
 -- Grants for role: admin-organization (sass organization codes)
 --
 INSERT INTO
@@ -2421,6 +2449,34 @@ WHERE
         'sales:delivery-order-metadata:view:detail',
         'sales:delivery-order-metadata:view:update',
         'sales:delivery-order-metadata:view:delete'
+    ) ON CONFLICT DO NOTHING;
+
+--
+-- Grants for role: admin-organization (pos codes)
+--
+INSERT INTO
+    public.base_permissions (uuid, role_id, action_id, created_at, updated_at)
+SELECT
+    gen_random_uuid (),
+    r.uuid,
+    a.uuid,
+    NOW (),
+    NOW ()
+FROM
+    public.base_roles r
+    CROSS JOIN public.base_actions a
+WHERE
+    r.slug = 'admin-organization'
+    AND a.action IN (
+        'base:menu:sales:pos',
+        'sales:pos-session:list:list',
+        'sales:pos-session:create:create',
+        'sales:pos-session:view:detail',
+        'sales:pos-session:view:close',
+        'sales:pos-transaction:list:list',
+        'sales:pos-transaction:create:create',
+        'sales:pos-transaction:view:detail',
+        'sales:pos-transaction:view:void'
     ) ON CONFLICT DO NOTHING;
 
 --
@@ -3109,8 +3165,31 @@ VALUES
     ('048d163f-2238-412b-af3c-b49dd06c35dc', 'sales:delivery-order-metadata:create:create', 'Access for create delivery order metadata', 'active', NOW (), NOW (), NULL),
     ('dd34f405-7418-4190-8f71-b8f65d4564b9', 'sales:delivery-order-metadata:view:detail', 'Access for view detail delivery order metadata', 'active', NOW (), NOW (), NULL),
     ('f32d9fb3-7d88-44d8-a6f8-0510201798f0', 'sales:delivery-order-metadata:view:update', 'Access for update detail delivery order metadata', 'active', NOW (), NOW (), NULL),
-    ('04f58257-16d4-4dd2-879a-8b8dbb2e6eb5', 'sales:delivery-order-metadata:view:delete', 'Access for delete delivery order metadata', 'active', NOW (), NOW (), NULL)
+    ('04f58257-16d4-4dd2-879a-8b8dbb2e6eb5', 'sales:delivery-order-metadata:view:delete', 'Access for delete delivery order metadata', 'active', NOW (), NOW (), NULL),
+    ('d6fa30de-02d2-4af4-abbd-187ee8015292', 'base:menu:sales:pos', 'Access for sales POS module', 'active', NOW (), NOW (), NULL),
+    ('a8c659e1-6a4f-4ae0-87f0-0e9ca4004c12', 'sales:pos-session:list:list', 'Access for list POS session', 'active', NOW (), NOW (), NULL),
+    ('8e241de7-1b8e-4a2f-bf1c-2285554a4318', 'sales:pos-session:create:create', 'Access for open POS session', 'active', NOW (), NOW (), NULL),
+    ('c61611ee-0e20-4e10-bbbb-af9853e1aab4', 'sales:pos-session:view:detail', 'Access for view detail POS session', 'active', NOW (), NOW (), NULL),
+    ('73649104-631a-49eb-8f02-ed6a63690f05', 'sales:pos-session:view:close', 'Access for close POS session', 'active', NOW (), NOW (), NULL),
+    ('126f1385-4b7f-44ac-9059-797b33ef4054', 'sales:pos-transaction:list:list', 'Access for list POS transaction', 'active', NOW (), NOW (), NULL),
+    ('74e6c250-94b3-410d-8b5e-e74d4320cc2b', 'sales:pos-transaction:create:create', 'Access for create POS transaction', 'active', NOW (), NOW (), NULL),
+    ('a1fe1d30-3945-4abb-9f0c-8c666cb85018', 'sales:pos-transaction:view:detail', 'Access for view detail POS transaction', 'active', NOW (), NOW (), NULL),
+    ('9bdbfb9e-9060-472c-bb03-7d2459e02ca9', 'sales:pos-transaction:view:void', 'Access for void POS transaction', 'active', NOW (), NOW (), NULL)
     ON CONFLICT DO NOTHING;
+
+-- Billing-gated POS sales must be packageable through the PackageForm UI.
+UPDATE public.base_actions SET is_transactions = true
+WHERE action = 'sales:pos-transaction:create:create' AND deleted_at IS NULL;
+
+-- Sales → POS menu (resolved by action name so ordering is safe).
+INSERT INTO public.base_menus (uuid, icon, parent, menu, action_id, description, redirection, status, created_at, updated_at, deleted_at, weight)
+SELECT
+    'bdc37330-a397-4bef-99d1-adcba65eba4f', '-', '33740e19-ef64-4c13-8707-0052e866bd23',
+    'POS', a.uuid, 'Access to point of sale terminal',
+    '/sales/views/pos', 'active', NOW(), NOW(), NULL, 3
+FROM public.base_actions a
+WHERE a.action = 'base:menu:sales:pos'
+ON CONFLICT DO NOTHING;
 
 --
 -- Warehouse module menus

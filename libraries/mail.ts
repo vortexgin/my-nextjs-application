@@ -55,6 +55,7 @@ export async function sendMailgunEmail(to: string, subject: string, text: string
 }
 
 export async function sendPasswordResetEmail(to: string, resetLink: string): Promise<boolean> {
+
   const subject = "Reset your VortexGin password";
   const text = [
     "You requested a password reset for your VortexGin account.",
@@ -67,6 +68,68 @@ export async function sendPasswordResetEmail(to: string, resetLink: string): Pro
   const sent = await sendMailgunEmail(to, subject, text);
   if (!sent) {
     console.warn(`[mail] Reset link for ${to}: ${resetLink}`);
+  }
+
+  return sent;
+}
+
+export type PosReceiptLine = {
+  product_id: string;
+  variant_id: string | null;
+  qty: number;
+  unit_price: number;
+  discount_pct: number;
+  line_total: number;
+};
+
+export type PosReceipt = {
+  receipt_no: string;
+  channel: "print" | "email";
+  sent_at: string | null;
+  status: string;
+  paper_stock_note: boolean;
+  session_id: string;
+  cashier: string | null;
+  warehouse_id: string;
+  customer_id: string | null;
+  payment_method: string;
+  tendered: number | null;
+  change: number | null;
+  subtotal: number;
+  discount_pct: number;
+  grand_total: number;
+  lines: PosReceiptLine[];
+  created_at: string;
+};
+
+/**
+ * Emails a POS receipt (text only V1). Returns true when accepted.
+ * Missing credentials or send errors return false — the caller keeps the
+ * sale completed with `receipt_sent_at=null` (email pending).
+ */
+export async function sendPosReceiptEmail(to: string, receipt: PosReceipt): Promise<boolean> {
+  const subject = `Receipt ${receipt.receipt_no}`;
+  const lines = receipt.lines.map(
+    (line, index) =>
+      `${index + 1}. ${line.product_id.slice(0, 8)} x${line.qty} @ ${line.unit_price} = ${line.line_total}`,
+  );
+  const text = [
+    `Receipt ${receipt.receipt_no}`,
+    `Date: ${receipt.created_at}`,
+    `Payment: ${receipt.payment_method}`,
+    ...(typeof receipt.tendered === "number" ? [`Tendered: ${receipt.tendered}`, `Change: ${receipt.change ?? 0}`] : []),
+    "",
+    ...lines,
+    "",
+    `Subtotal: ${receipt.subtotal}`,
+    `Discount: ${receipt.discount_pct}%`,
+    `Total: ${receipt.grand_total}`,
+    ...(receipt.paper_stock_note ? ["", "Note: paper sale — stock not deducted."] : []),
+  ].join("\n");
+
+  const sent = await sendMailgunEmail(to, subject, text);
+  if (!sent) {
+    console.warn(`[mail] POS receipt ${receipt.receipt_no} for ${to} not sent (pending).`);
   }
 
   return sent;
