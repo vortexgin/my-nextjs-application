@@ -49,6 +49,10 @@ Submodules (separate repos, commit inside each first, then the parent pointer):
   grants; rerun freely) + `database/seed-product-sample.sql` (sample catalog).
 - Non-useCase helpers (sync/insert/row builders) live in
   `app/<domain>/libraries/`, never inside `useCases/`.
+- Google Docs PDF templates are organization-scoped `base_document_templates`.
+  Google clients/renderers live in `libraries/google/`; canonical PR/SO/DO and
+  stock parameter builders live under each module's `libraries/pdf/`. PDF APIs
+  return encrypted base64 JSON, never raw/multipart bytes or caller template IDs.
 
 ## Rules that bite
 

@@ -7,10 +7,12 @@
     "build": "next build",
     "start": "rm -fr .next && npm run build && next start",
     "lint": "eslint",
-    "keys:generate": "node scripts/generate-keys.mjs"
+    "keys:generate": "node scripts/generate-keys.mjs",
+    "pdf:cleanup": "node scripts/cleanup-pdf-temp.mjs"
   },
   "dependencies": {
     "cos-nodejs-sdk-v5": "^3.0.0",
+    "googleapis": "^184.0.0",
     "joi": "^18.2.8",
     "next": "16.3.4",
     "pg": "^8.23.0",

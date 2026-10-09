@@ -28,6 +28,7 @@
 
 # RSA keys for API payload encryption (private key must never be committed)
 keys/*.pem
+keys/*.json
 !keys/.gitkeep
 
 # debug

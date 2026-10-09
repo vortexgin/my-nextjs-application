@@ -3187,3 +3187,83 @@ VALUES
         NULL,
         2
     ) ON CONFLICT DO NOTHING;
+
+-- Google Docs PDF template configuration ------------------------------------
+INSERT INTO public.base_actions (uuid, action, description, status, created_at, updated_at, deleted_at)
+VALUES
+    ('d0901935-408c-455a-a622-2dd497a5ad01', 'base:document-template:list:list', 'Access for list document template', 'active', NOW(), NOW(), NULL),
+    ('b346584c-096a-4163-aaef-12f7bfedaae2', 'base:document-template:create:create', 'Access for create document template', 'active', NOW(), NOW(), NULL),
+    ('327a0b5b-c81a-494b-a2b6-4f5758f19873', 'base:document-template:view:detail', 'Access for view document template', 'active', NOW(), NOW(), NULL),
+    ('cb9a9e14-cb4f-4ddc-9059-7a7234d90364', 'base:document-template:view:update', 'Access for update document template', 'active', NOW(), NOW(), NULL),
+    ('c4381de8-5701-4ee7-84c8-b94899a95d55', 'base:document-template:view:delete', 'Access for delete document template', 'active', NOW(), NOW(), NULL),
+    ('35142761-cb43-408b-a131-0b16e1a26046', 'base:document-template:view:validate', 'Access for validate document template', 'active', NOW(), NOW(), NULL),
+    ('f71809de-ad30-48bd-bcfa-d0f58abeb827', 'base:menu:base:document-templates', 'Access to document template menu', 'active', NOW(), NOW(), NULL)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.base_menus (uuid, icon, parent, menu, action_id, description, redirection, status, created_at, updated_at, deleted_at, weight)
+SELECT
+    '51d3971b-4619-4d16-8859-b6cd44df3fa8', '-', 'fc89a49c-b4a6-4acc-951a-0860be8fda70',
+    'Document Templates', a.uuid, 'Configure Google Docs PDF templates',
+    '/base/views/document-templates', 'active', NOW(), NOW(), NULL, 5
+FROM public.base_actions a
+WHERE a.action = 'base:menu:base:document-templates'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.base_permissions (uuid, role_id, action_id, created_at, updated_at)
+SELECT gen_random_uuid(), r.uuid, a.uuid, NOW(), NOW()
+FROM public.base_roles r
+CROSS JOIN public.base_actions a
+WHERE r.slug IN ('admin', 'admin-organization')
+  AND a.action IN (
+    'base:document-template:list:list',
+    'base:document-template:create:create',
+    'base:document-template:view:detail',
+    'base:document-template:view:update',
+    'base:document-template:view:delete',
+    'base:document-template:view:validate',
+    'base:menu:base:document-templates'
+  )
+ON CONFLICT DO NOTHING;
+
+-- Sample Google Docs PDF templates for the global (NULL organization) scope
+-- and every existing non-deleted organization. The documents currently live
+-- in the sample folder under GOOGLE_DRIVE_TEMP_FOLDER_ID; move that folder out
+-- of the temporary hierarchy before treating these rows as production config.
+WITH template_seed (document_type, name, google_doc_id) AS (
+    VALUES
+        ('purchase_request', 'Sample Purchase Request PDF Template', '1TCMD-C4Jd23XtvpGrwwtvJ2kvesIIfhtiCwlLMEaz8g'),
+        ('sales_order', 'Sample Sales Order PDF Template', '1sEmZqQoeogwUDpyYWd7upCZ1Wo3TNYGNDuG1kUjGdD8'),
+        ('delivery_order', 'Sample Delivery Order PDF Template', '1IWKE5-qS8Un26GwJQl2l-EI6ETU8JYMXJf0cGOJR0sU'),
+        ('stock_report', 'Sample Stock Report PDF Template', '1OHDYw0lRLWGgHR0EfP5ziURYqn69TQjNplkD7r1VWv0')
+), organization_scope (organization_id) AS (
+    SELECT NULL::uuid
+    UNION ALL
+    SELECT organization.uuid
+    FROM public.sass_organization organization
+    WHERE organization.deleted_at IS NULL
+      AND organization.status <> 'deleted'
+)
+INSERT INTO public.base_document_templates (
+    uuid,
+    organization_id,
+    document_type,
+    name,
+    google_doc_id,
+    status,
+    created_at,
+    updated_at,
+    deleted_at
+)
+SELECT
+    gen_random_uuid(),
+    organization_scope.organization_id,
+    template_seed.document_type::public.enum_base_document_templates_document_type,
+    template_seed.name,
+    template_seed.google_doc_id,
+    'active',
+    NOW(),
+    NOW(),
+    NULL
+FROM organization_scope
+CROSS JOIN template_seed
+ON CONFLICT DO NOTHING;

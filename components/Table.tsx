@@ -74,6 +74,7 @@ export function Table({
   isRowUpdateLocked,
   isRowDeleteLocked,
   lockedLabel,
+  onQueryChange,
 }: {
   session: SessionInfo,
   columns: TableColumn[];
@@ -102,6 +103,8 @@ export function Table({
   isRowDeleteLocked?: (row: TableRow) => boolean;
   /** Badge text for locked rows. Defaults to "Closed". */
   lockedLabel?: string;
+  /** Reports the active sort/page query (useful for exports). */
+  onQueryChange?: (query: TableQuery) => void;
 }) {
   const initialSort = defaultSort?.key ?? columns[0].key;
   const initialDir = defaultSort?.dir ?? "desc";
@@ -119,12 +122,14 @@ export function Table({
   const extraRef = useRef(extraParams);
   const sizeRef = useRef(pageSize);
   const sortRef = useRef({ key: initialSort, dir: initialDir });
+  const queryChangeRef = useRef(onQueryChange);
 
   useEffect(() => {
     fetchRef.current = fetchRows;
     extraRef.current = extraParams;
     sizeRef.current = pageSize;
     sortRef.current = { key: initialSort, dir: initialDir };
+    queryChangeRef.current = onQueryChange;
   });
 
   const load = useCallback(
@@ -138,6 +143,7 @@ export function Table({
         setRows(data.slice(0, sizeRef.current));
         setHasNext(data.length > sizeRef.current);
         setQuery(next);
+        queryChangeRef.current?.(next);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch rows.");
         setRows([]);
@@ -163,6 +169,7 @@ export function Table({
         setRows(data.slice(0, sizeRef.current));
         setHasNext(data.length > sizeRef.current);
         setQuery({ sort: first.key, dir: first.dir, offset: 0 });
+        queryChangeRef.current?.({ sort: first.key, dir: first.dir, offset: 0 });
       } catch (err) {
         if (!active) {
           return;

@@ -49,6 +49,14 @@ pm2 restart my-next-app
 | `MAILGUN_API_KEY` / `MAILGUN_DOMAIN` / `MAILGUN_FROM` | outbound mail |
 | `COS_SECRET_ID` / `COS_SECRET_KEY` / `COS_BUCKET` / `COS_REGION` | Tencent COS uploads (required) |
 | `COS_ENDPOINT` / `COS_UPLOAD_PREFIX` / `COS_MAX_FILE_BYTES` | COS overrides (optional) |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL` / `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | Google Drive/Docs service account credentials |
+| `GOOGLE_DRIVE_TEMP_FOLDER_ID` | Dedicated folder for temporary document copies |
+| `PDF_TEMP_DIRECTORY` | Local temporary PDF directory (default `/tmp/vortexgin-pdf`) |
+| `PDF_MAX_BYTES` / `PDF_STOCK_MAX_ROWS` / `PDF_GENERATION_TIMEOUT_MS` | PDF safety limits |
+
+Google Docs masters must be shared with the service account and kept outside
+the temporary folder. Schedule `npm run pdf:cleanup` to remove temporary Drive
+copies and local UUID-named PDFs older than one hour.
 
 ## Conventions
 
