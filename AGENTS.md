@@ -128,6 +128,12 @@ Submodules (separate repos, commit inside each first, then the parent pointer):
   `DeliveryOrderCreateUseCase`, mirrored client-side (`max` + hint). DO items
   are fixed after creation (update accepts notes + status only); `packed` ships
   via the ship endpoint, `delivered` only from `shipped`.
+- POS prices are server-authoritative product/variant snapshots; clients never
+  submit or edit `unit_price`. Product discovery is limited to the selected
+  warehouse's stock rows, and changing warehouses clears the cart and resets
+  fulfillment to system stock deduction. New sales default to 10% tax and
+  snapshot `tax_pct`/`tax_amount`; debit/credit requires only the card's final
+  four numeric digits (`card_last_four`), never the full card number.
 - Create payloads are mode-split: immutable links (`customer_id`,
   `purchase_request_id`, `sales_order_id`, `warehouse_id`) and create-only keys
   go out on edit; creates start at `draft` (PR create accepts draft-only

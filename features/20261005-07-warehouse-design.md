@@ -81,7 +81,7 @@ Opname hardening (locked per request):
 - `preExec`: Joi → resolve `organizationId` → existence + same-org checks (`warehouse`, `product`, `variant` belongs to `product`) → 404/403. `qty_reserved` ignored in V1 math except `out` availability uses `on_hand - reserved`.
 - `execute` (DB transaction): lock/find-or-create stock row → compute `next` per type (`in: +qty`, `out: -qty` with `next>=0` else 422 `UnprocessableEntityException("Insufficient stock.")`, `adjust: counted` with `counted>=0` else 400, transfer legs mirrored) → update `stock.qty_on_hand = next` → insert movement row(s) with `balance_after: next`. `postExec`: plain `recordActivityLog(operation:"create", entity:"movement")` (master-data class billing V1).
 
-List: `filter{warehouse_id, product_id, variant_id, type, ref_type, ref_id, date_from, date_to}`, `sort created_at desc`, `limit 1-100 default 50`.
+List: `filter{warehouse_id, product_id, variant_id, type, ref_type, ref_id, date_from, date_to}`, `sort created_at desc`, `limit 1-100 default 50`. The list query eagerly resolves warehouse `{code,name}` and product/variant `{sku,name}` labels (including soft-deleted master rows for ledger history); the table shows those labels with UUID fallback and does not issue page-level relation lookups.
 
 ## F-04 Import (opening-balance + opname)
 

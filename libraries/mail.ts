@@ -75,7 +75,10 @@ export async function sendPasswordResetEmail(to: string, resetLink: string): Pro
 
 export type PosReceiptLine = {
   product_id: string;
+  product_name: string;
+  product_sku: string | null;
   variant_id: string | null;
+  variant_name: string | null;
   qty: number;
   unit_price: number;
   discount_pct: number;
@@ -93,10 +96,13 @@ export type PosReceipt = {
   warehouse_id: string;
   customer_id: string | null;
   payment_method: string;
+  card_last_four: string | null;
   tendered: number | null;
   change: number | null;
   subtotal: number;
   discount_pct: number;
+  tax_pct: number;
+  tax_amount: number;
   grand_total: number;
   lines: PosReceiptLine[];
   created_at: string;
@@ -111,18 +117,20 @@ export async function sendPosReceiptEmail(to: string, receipt: PosReceipt): Prom
   const subject = `Receipt ${receipt.receipt_no}`;
   const lines = receipt.lines.map(
     (line, index) =>
-      `${index + 1}. ${line.product_id.slice(0, 8)} x${line.qty} @ ${line.unit_price} = ${line.line_total}`,
+      `${index + 1}. ${line.product_name}${line.variant_name ? ` — ${line.variant_name}` : ""} x${line.qty} @ ${line.unit_price} = ${line.line_total}`,
   );
   const text = [
     `Receipt ${receipt.receipt_no}`,
     `Date: ${receipt.created_at}`,
     `Payment: ${receipt.payment_method}`,
+    ...(receipt.card_last_four ? [`Card ending: ${receipt.card_last_four}`] : []),
     ...(typeof receipt.tendered === "number" ? [`Tendered: ${receipt.tendered}`, `Change: ${receipt.change ?? 0}`] : []),
     "",
     ...lines,
     "",
     `Subtotal: ${receipt.subtotal}`,
     `Discount: ${receipt.discount_pct}%`,
+    `Tax (${receipt.tax_pct}%): ${receipt.tax_amount}`,
     `Total: ${receipt.grand_total}`,
     ...(receipt.paper_stock_note ? ["", "Note: paper sale — stock not deducted."] : []),
   ].join("\n");
