@@ -3346,3 +3346,221 @@ SELECT
 FROM organization_scope
 CROSS JOIN template_seed
 ON CONFLICT DO NOTHING;
+
+-- Marketing module actions ------------------------------------------
+INSERT INTO
+    public.base_actions (uuid, action, description, status, created_at, updated_at, deleted_at)
+VALUES
+    ('74d1de88-a0aa-4275-b473-70112f3a0239', 'marketing:setting:view:detail', 'Access for setting view detail', 'active', NOW (), NOW (), NULL),
+    ('7702dd9d-750a-4405-b95b-0f6ca4ad122f', 'marketing:setting:view:update', 'Access for setting view update', 'active', NOW (), NOW (), NULL),
+    ('d240e973-cbbc-4934-82ca-8ae0cdd9f094', 'marketing:contact-preference:list:list', 'Access for contact-preference list list', 'active', NOW (), NOW (), NULL),
+    ('50ddac79-7dd0-4a2c-a760-ab1062e6e952', 'marketing:contact-preference:create:import', 'Access for contact-preference create import', 'active', NOW (), NOW (), NULL),
+    ('132019b0-22ef-43ff-8269-432e00d832a3', 'marketing:contact-preference:view:update', 'Access for contact-preference view update', 'active', NOW (), NOW (), NULL),
+    ('1f5373d5-0c33-4c6e-8960-4b89faa729dd', 'marketing:segment:list:list', 'Access for segment list list', 'active', NOW (), NOW (), NULL),
+    ('1c63b9ec-2ca6-4044-8d3f-97224b0ecca1', 'marketing:segment:create:create', 'Access for segment create create', 'active', NOW (), NOW (), NULL),
+    ('84894156-06be-4d86-b328-6a28d9408f68', 'marketing:segment:view:detail', 'Access for segment view detail', 'active', NOW (), NOW (), NULL),
+    ('5d6037a3-1761-4451-8e3f-fb0094d58060', 'marketing:segment:view:update', 'Access for segment view update', 'active', NOW (), NOW (), NULL),
+    ('843c3c7e-ae5e-4952-a2bd-9bd76059c677', 'marketing:segment:view:delete', 'Access for segment view delete', 'active', NOW (), NOW (), NULL),
+    ('0307d084-fd1f-42d5-902e-1992c9f1f603', 'marketing:segment:view:preview', 'Access for segment view preview', 'active', NOW (), NOW (), NULL),
+    ('613e0784-0ace-45d9-a182-a51d9a41a072', 'marketing:template:list:list', 'Access for template list list', 'active', NOW (), NOW (), NULL),
+    ('18b96bcd-a895-4a78-8a39-9be5a10124f3', 'marketing:template:create:create', 'Access for template create create', 'active', NOW (), NOW (), NULL),
+    ('5f4f2715-1f15-40a1-b3d1-a48109109e84', 'marketing:template:view:detail', 'Access for template view detail', 'active', NOW (), NOW (), NULL),
+    ('874a5c19-6b40-4bb1-925d-4a99c1b4877e', 'marketing:template:view:update', 'Access for template view update', 'active', NOW (), NOW (), NULL),
+    ('88217583-4632-48ef-9455-9895f11c44cc', 'marketing:template:view:delete', 'Access for template view delete', 'active', NOW (), NOW (), NULL),
+    ('9612f3ff-7911-41eb-9d07-20b8d27b02ad', 'marketing:template:view:preview', 'Access for template view preview', 'active', NOW (), NOW (), NULL),
+    ('bfb1b56e-9dce-4733-80b2-8224ecb2047f', 'marketing:template:view:test', 'Access for template view test', 'active', NOW (), NOW (), NULL),
+    ('b5d74ed6-a712-4b45-b403-169f2fece2f7', 'marketing:campaign:list:list', 'Access for campaign list list', 'active', NOW (), NOW (), NULL),
+    ('53aa2e96-6567-49bc-93a6-bd322b5f6d39', 'marketing:campaign:create:create', 'Access for campaign create create', 'active', NOW (), NOW (), NULL),
+    ('d5fea437-c974-4076-bbae-2813722d5710', 'marketing:campaign:view:detail', 'Access for campaign view detail', 'active', NOW (), NOW (), NULL),
+    ('1f2a4634-0b1c-47c2-9a20-caaf7fb18f79', 'marketing:campaign:view:update', 'Access for campaign view update', 'active', NOW (), NOW (), NULL),
+    ('abee3640-7270-490f-9668-b9277e7ae155', 'marketing:campaign:view:delete', 'Access for campaign view delete', 'active', NOW (), NOW (), NULL),
+    ('7684e29e-19eb-449e-be69-18d25e2a91a7', 'marketing:campaign:view:schedule', 'Access for campaign view schedule', 'active', NOW (), NOW (), NULL),
+    ('97046512-170c-466d-aeeb-1062edd69cb8', 'marketing:campaign:view:send', 'Access for campaign view send', 'active', NOW (), NOW (), NULL),
+    ('05d30fdd-34b0-416c-b267-b508cf00426f', 'marketing:campaign:view:pause', 'Access for campaign view pause', 'active', NOW (), NOW (), NULL),
+    ('4e1ff452-b138-4473-961b-1e9037bc5853', 'marketing:campaign:view:cancel', 'Access for campaign view cancel', 'active', NOW (), NOW (), NULL),
+    ('06d9fedc-afb5-4c2a-9290-a969d99d75f5', 'marketing:recipient:create:send', 'Access for recipient create send', 'active', NOW (), NOW (), NULL),
+    ('9748424e-3524-4997-bda6-984e93d02dfc', 'marketing:landing-page:list:list', 'Access for landing-page list list', 'active', NOW (), NOW (), NULL),
+    ('93140892-0fff-4346-ab0d-402f4fc3678d', 'marketing:landing-page:create:create', 'Access for landing-page create create', 'active', NOW (), NOW (), NULL),
+    ('5c6d771e-1e31-4965-af01-2451f55f9d9e', 'marketing:landing-page:view:detail', 'Access for landing-page view detail', 'active', NOW (), NOW (), NULL),
+    ('70839605-ba97-4145-8615-48cc1cc33451', 'marketing:landing-page:view:update', 'Access for landing-page view update', 'active', NOW (), NOW (), NULL),
+    ('cc6f4feb-3509-4938-ba27-d3767dec8344', 'marketing:landing-page:view:delete', 'Access for landing-page view delete', 'active', NOW (), NOW (), NULL),
+    ('014a4354-8ee0-4dd7-bdcc-3f3d6486bee9', 'marketing:landing-page:view:publish', 'Access for landing-page view publish', 'active', NOW (), NOW (), NULL),
+    ('3f6fd974-dd81-459a-92ca-ed50e613a3b9', 'marketing:form:list:list', 'Access for form list list', 'active', NOW (), NOW (), NULL),
+    ('dee7372f-aeea-4538-a107-70ab36df4002', 'marketing:form:create:create', 'Access for form create create', 'active', NOW (), NOW (), NULL),
+    ('d04778a2-0539-491f-98a1-7e3b77b5ce98', 'marketing:form:view:detail', 'Access for form view detail', 'active', NOW (), NOW (), NULL),
+    ('c462f54a-dc15-4bd1-ab69-df984b317f15', 'marketing:form:view:update', 'Access for form view update', 'active', NOW (), NOW (), NULL),
+    ('c0a4d09b-1834-40a4-abb2-90d6624ae938', 'marketing:form:view:delete', 'Access for form view delete', 'active', NOW (), NOW (), NULL),
+    ('d8311c45-5c40-493a-bae1-6b8c25fce3af', 'marketing:form-submission:list:list', 'Access for form-submission list list', 'active', NOW (), NOW (), NULL),
+    ('5e3413aa-3ba3-4ca6-a8ce-943e87768416', 'marketing:report:list:list', 'Access for report list list', 'active', NOW (), NOW (), NULL),
+    ('b1d7421c-fb45-4b88-a16b-2fc708383ffb', 'base:menu:marketing:marketing', 'Access for marketing module', 'active', NOW (), NOW (), NULL),
+    ('14499beb-b3f1-49c9-a919-706f1b7293e9', 'base:menu:marketing:settings', 'Access for marketing settings', 'active', NOW (), NOW (), NULL),
+    ('23854c40-cd53-4e50-bf8a-15b210b2dd33', 'base:menu:marketing:contacts', 'Access for marketing contacts', 'active', NOW (), NOW (), NULL),
+    ('1d359885-4b6c-4aff-9101-9a665801f29e', 'base:menu:marketing:segments', 'Access for marketing segments', 'active', NOW (), NOW (), NULL),
+    ('04dcbcf7-ca20-4f3f-93ec-fafe30a3ccb5', 'base:menu:marketing:templates', 'Access for marketing templates', 'active', NOW (), NOW (), NULL),
+    ('00069090-cf25-4efd-bc73-7fad15310e0e', 'base:menu:marketing:campaigns', 'Access for marketing campaigns', 'active', NOW (), NOW (), NULL),
+    ('89de028c-cb2e-4ebf-b93d-6b1e958f1f9e', 'base:menu:marketing:landing-pages', 'Access for marketing landing pages', 'active', NOW (), NOW (), NULL),
+    ('c74f3072-2f81-4563-8e57-029112b55d29', 'base:menu:marketing:forms', 'Access for marketing forms', 'active', NOW (), NOW (), NULL),
+    ('a85a1782-ffef-4d08-8aed-858228e9aeee', 'base:menu:marketing:reports', 'Access for marketing reports', 'active', NOW (), NOW (), NULL)
+ON CONFLICT DO NOTHING;
+
+-- Billing-gated marketing sends must be packageable through the PackageForm UI.
+UPDATE public.base_actions SET is_transactions = true
+WHERE action IN ('marketing:campaign:view:send', 'marketing:recipient:create:send') AND deleted_at IS NULL;
+
+-- Marketing module menus --------------------------------------------
+INSERT INTO
+    public.base_menus (uuid, icon, parent, menu, action_id, description, redirection, status, created_at, updated_at, deleted_at, weight)
+SELECT
+    '3b13cb59-9369-482a-be19-30c6ab4cd9ec', '-', NULL,
+    'Marketing', a.uuid, 'Access to marketing module',
+    '#', 'active', NOW(), NOW(), NULL, 6
+FROM public.base_actions a
+WHERE a.action = 'base:menu:marketing:marketing'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_menus (uuid, icon, parent, menu, action_id, description, redirection, status, created_at, updated_at, deleted_at, weight)
+SELECT
+    'ec557729-6b62-43ea-bbc5-a3962b2859c0', '-', '3b13cb59-9369-482a-be19-30c6ab4cd9ec',
+    'Settings', a.uuid, 'Access to marketing settings',
+    '/marketing/views/settings', 'active', NOW(), NOW(), NULL, 0
+FROM public.base_actions a
+WHERE a.action = 'base:menu:marketing:settings'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_menus (uuid, icon, parent, menu, action_id, description, redirection, status, created_at, updated_at, deleted_at, weight)
+SELECT
+    'fef2414d-836b-47b3-a30c-49a698a93c0c', '-', '3b13cb59-9369-482a-be19-30c6ab4cd9ec',
+    'Contacts', a.uuid, 'Access to marketing contacts',
+    '/marketing/views/contact-preferences', 'active', NOW(), NOW(), NULL, 1
+FROM public.base_actions a
+WHERE a.action = 'base:menu:marketing:contacts'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_menus (uuid, icon, parent, menu, action_id, description, redirection, status, created_at, updated_at, deleted_at, weight)
+SELECT
+    'd3cace33-0487-49c7-ac78-36bb83442c37', '-', '3b13cb59-9369-482a-be19-30c6ab4cd9ec',
+    'Segments', a.uuid, 'Access to marketing segments',
+    '/marketing/views/segments', 'active', NOW(), NOW(), NULL, 2
+FROM public.base_actions a
+WHERE a.action = 'base:menu:marketing:segments'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_menus (uuid, icon, parent, menu, action_id, description, redirection, status, created_at, updated_at, deleted_at, weight)
+SELECT
+    '85ff019a-8100-427c-88f2-d322e084cc6b', '-', '3b13cb59-9369-482a-be19-30c6ab4cd9ec',
+    'Templates', a.uuid, 'Access for marketing templates',
+    '/marketing/views/templates', 'active', NOW(), NOW(), NULL, 3
+FROM public.base_actions a
+WHERE a.action = 'base:menu:marketing:templates'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_menus (uuid, icon, parent, menu, action_id, description, redirection, status, created_at, updated_at, deleted_at, weight)
+SELECT
+    '41b1570d-c0b9-45ff-ae76-b7ae230d6a5f', '-', '3b13cb59-9369-482a-be19-30c6ab4cd9ec',
+    'Campaigns', a.uuid, 'Access for marketing campaigns',
+    '/marketing/views/campaigns', 'active', NOW(), NOW(), NULL, 4
+FROM public.base_actions a
+WHERE a.action = 'base:menu:marketing:campaigns'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_menus (uuid, icon, parent, menu, action_id, description, redirection, status, created_at, updated_at, deleted_at, weight)
+SELECT
+    'af7b1320-c418-4f60-8376-12f6daa371d5', '-', '3b13cb59-9369-482a-be19-30c6ab4cd9ec',
+    'Landing Pages', a.uuid, 'Access for marketing landing pages',
+    '/marketing/views/landing-pages', 'active', NOW(), NOW(), NULL, 5
+FROM public.base_actions a
+WHERE a.action = 'base:menu:marketing:landing-pages'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_menus (uuid, icon, parent, menu, action_id, description, redirection, status, created_at, updated_at, deleted_at, weight)
+SELECT
+    'bcd53302-c8b9-4dd1-b379-b58a525eb44f', '-', '3b13cb59-9369-482a-be19-30c6ab4cd9ec',
+    'Forms', a.uuid, 'Access for marketing forms',
+    '/marketing/views/forms', 'active', NOW(), NOW(), NULL, 6
+FROM public.base_actions a
+WHERE a.action = 'base:menu:marketing:forms'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO
+    public.base_menus (uuid, icon, parent, menu, action_id, description, redirection, status, created_at, updated_at, deleted_at, weight)
+SELECT
+    'bec6a3ac-e3c3-4687-a700-caf01eb53d4a', '-', '3b13cb59-9369-482a-be19-30c6ab4cd9ec',
+    'Reports', a.uuid, 'Access for marketing reports',
+    '/marketing/views/reports', 'active', NOW(), NOW(), NULL, 7
+FROM public.base_actions a
+WHERE a.action = 'base:menu:marketing:reports'
+ON CONFLICT DO NOTHING;
+
+-- Grants for roles: admin + admin-organization (marketing codes) -------
+INSERT INTO
+    public.base_permissions (uuid, role_id, action_id, created_at, updated_at)
+SELECT
+    gen_random_uuid (),
+    r.uuid,
+    a.uuid,
+    NOW (),
+    NOW ()
+FROM
+    public.base_roles r
+    CROSS JOIN public.base_actions a
+WHERE
+    r.slug IN ('admin', 'admin-organization')
+    AND a.action IN (
+        'base:menu:marketing:marketing',
+        'base:menu:marketing:settings',
+        'base:menu:marketing:contacts',
+        'base:menu:marketing:segments',
+        'base:menu:marketing:templates',
+        'base:menu:marketing:campaigns',
+        'base:menu:marketing:landing-pages',
+        'base:menu:marketing:forms',
+        'base:menu:marketing:reports',
+        'marketing:setting:view:detail',
+        'marketing:setting:view:update',
+        'marketing:contact-preference:list:list',
+        'marketing:contact-preference:create:import',
+        'marketing:contact-preference:view:update',
+        'marketing:segment:list:list',
+        'marketing:segment:create:create',
+        'marketing:segment:view:detail',
+        'marketing:segment:view:update',
+        'marketing:segment:view:delete',
+        'marketing:segment:view:preview',
+        'marketing:template:list:list',
+        'marketing:template:create:create',
+        'marketing:template:view:detail',
+        'marketing:template:view:update',
+        'marketing:template:view:delete',
+        'marketing:template:view:preview',
+        'marketing:template:view:test',
+        'marketing:campaign:list:list',
+        'marketing:campaign:create:create',
+        'marketing:campaign:view:detail',
+        'marketing:campaign:view:update',
+        'marketing:campaign:view:delete',
+        'marketing:campaign:view:schedule',
+        'marketing:campaign:view:send',
+        'marketing:campaign:view:pause',
+        'marketing:campaign:view:cancel',
+        'marketing:recipient:create:send',
+        'marketing:landing-page:list:list',
+        'marketing:landing-page:create:create',
+        'marketing:landing-page:view:detail',
+        'marketing:landing-page:view:update',
+        'marketing:landing-page:view:delete',
+        'marketing:landing-page:view:publish',
+        'marketing:form:list:list',
+        'marketing:form:create:create',
+        'marketing:form:view:detail',
+        'marketing:form:view:update',
+        'marketing:form:view:delete',
+        'marketing:form-submission:list:list',
+        'marketing:report:list:list'
+    ) ON CONFLICT DO NOTHING;

@@ -47,6 +47,10 @@ pm2 restart my-next-app
 | `DATABASE_URL` | Postgres connection string |
 | `APP_URL` | public origin for outbound links |
 | `MAILGUN_API_KEY` / `MAILGUN_DOMAIN` / `MAILGUN_FROM` | outbound mail |
+| `MAILGUN_WEBHOOK_SIGNING_KEY` | Mailgun webhook signature verification |
+| `MARKETING_PUBLIC_TOKEN_SECRET` | HMAC secret for unsubscribe/tracked-link/visitor tokens |
+| `MARKETING_WORKER_BATCH_SIZE` / `MARKETING_WORKER_STALE_SECONDS` | queue worker claim batch (default 50) / stale-claim recovery window (default 300s) |
+| `MARKETING_SENDS_PER_MINUTE` | worker send pacing (default 300) |
 | `COS_SECRET_ID` / `COS_SECRET_KEY` / `COS_BUCKET` / `COS_REGION` | Tencent COS uploads (required) |
 | `COS_ENDPOINT` / `COS_UPLOAD_PREFIX` / `COS_MAX_FILE_BYTES` | COS overrides (optional) |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` / `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | Google Drive/Docs service account credentials |

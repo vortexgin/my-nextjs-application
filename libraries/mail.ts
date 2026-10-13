@@ -1,3 +1,5 @@
+import { createHmac, timingSafeEqual } from "crypto";
+
 type MailgunConfig = {
   apiKey: string;
   domain: string;
@@ -141,4 +143,98 @@ export async function sendPosReceiptEmail(to: string, receipt: PosReceipt): Prom
   }
 
   return sent;
+}
+
+export type MarketingSendResult = {
+  accepted: boolean;
+  /** Mailgun message ID (`<...>`), present only when accepted. */
+  providerMessageId: string | null;
+};
+
+/**
+ * Sends a marketing email and returns the provider message ID so callers
+ * can settle recipient billing exactly-once on acceptance. Never throws:
+ * transport failures resolve to `{ accepted: false }` with a summary log.
+ */
+export async function sendMarketingEmail(input: {
+  to: string;
+  subject: string;
+  text: string;
+  html?: string;
+  fromName?: string;
+  fromEmail?: string;
+  replyTo?: string;
+  tags?: string[];
+}): Promise<MarketingSendResult> {
+  const failed: MarketingSendResult = { accepted: false, providerMessageId: null };
+  try {
+    const apiKey = process.env.MAILGUN_API_KEY?.trim();
+    const domain = process.env.MAILGUN_DOMAIN?.trim();
+    if (!apiKey || !domain) {
+      console.warn("[mail] MAILGUN_API_KEY / MAILGUN_DOMAIN missing, skipping marketing send.");
+      return failed;
+    }
+    // Overridable for the EU region endpoint and offline test doubles.
+    const apiBase = (process.env.MAILGUN_API_BASE?.trim() || "https://api.mailgun.net").replace(/\/+$/, "");
+    const from = `${input.fromName?.trim() || "VortexGin"} <${input.fromEmail?.trim() || process.env.MAILGUN_FROM?.trim() || `no-reply@${domain}`}>`;
+    const body = new URLSearchParams({
+      from,
+      to: input.to,
+      subject: input.subject,
+      text: input.text,
+    });
+    if (input.html) {
+      body.set("html", input.html);
+    }
+    if (input.replyTo?.trim()) {
+      body.set("h:Reply-To", input.replyTo.trim());
+    }
+    for (const tag of input.tags ?? []) {
+      body.append("o:tag", tag);
+    }
+
+    const response = await fetch(`${apiBase}/v3/${domain}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${Buffer.from(`api:${apiKey}`).toString("base64")}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: body.toString(),
+    });
+    if (!response.ok) {
+      console.error("[mail] Marketing send failed:", response.status, (await response.text()).slice(0, 300));
+      return failed;
+    }
+    const payload = (await response.json().catch(() => null)) as { id?: string } | null;
+    const providerMessageId = typeof payload?.id === "string" ? payload.id : null;
+    return { accepted: providerMessageId !== null, providerMessageId };
+  } catch (error) {
+    console.error("[mail] Marketing send transport error:", (error as Error)?.message ?? error);
+    return failed;
+  }
+}
+
+/**
+ * Verifies a Mailgun webhook signature (HMAC-SHA256 of timestamp+token).
+ * Enforces a short timestamp window to bound replay. Returns false when
+ * the signing key is unconfigured so misconfiguration fails closed.
+ */
+export function verifyMailgunWebhook(input: { timestamp: string; token: string; signature: string }, windowSeconds = 300): boolean {
+  try {
+    const key = process.env.MAILGUN_WEBHOOK_SIGNING_KEY?.trim();
+    if (!key) {
+      console.error("[mail] MAILGUN_WEBHOOK_SIGNING_KEY missing, rejecting webhook.");
+      return false;
+    }
+    const ts = Number(input.timestamp);
+    if (!Number.isFinite(ts) || Math.abs(Date.now() / 1000 - ts) > windowSeconds) {
+      return false;
+    }
+    const expected = createHmac("sha256", key).update(input.timestamp + input.token).digest("hex");
+    const a = Buffer.from(expected, "utf8");
+    const b = Buffer.from(input.signature, "utf8");
+    return a.length === b.length && timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
 }
