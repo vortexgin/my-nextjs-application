@@ -10,3 +10,6 @@
 [submodule "app/warehouse"]
 	path = app/warehouse
 	url = https://github.com/vortexgin/my-warehouse-library.git
+[submodule "app/marketing"]
+	path = app/marketing
+	url = https://github.com/vortexgin/my-marketing-library.git
